@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Content Desk</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f9fafc;
+    --text: #0f172a; --text-2: #475569; --muted: #94a3b8; --line: #e5e9f0;
+    --brand: #4f46e5; --brand-600: #4338ca; --brand-soft: #eef2ff;
+    --ok: #059669; --ok-soft: #ecfdf5; --ok-line: #a7f3d0;
+    --warn: #d97706; --warn-soft: #fffbeb;
+    --bad: #dc2626; --bad-soft: #fef2f2;
+    --info: #475569; --info-soft: #f1f5f9;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
+    --shadow-lg: 0 10px 30px -12px rgba(15,23,42,.18);
+    --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1020; --surface: #121a2e; --surface-2: #17213a;
+      --text: #e6ebf5; --text-2: #aab4c8; --muted: #6f7b94; --line: #22304d;
+      --brand: #818cf8; --brand-600: #6366f1; --brand-soft: #1e2750;
+      --ok-soft: #0d2a22; --ok-line: #14532d;
+      --warn-soft: #2d2410; --bad-soft: #2d1616; --info-soft: #1a2336;
+      --shadow: 0 1px 2px rgba(0,0,0,.4); --shadow-lg: 0 10px 30px -12px rgba(0,0,0,.6);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; font-family: var(--font); font-size: clamp(14px, 0.9vw + 11px, 15px); line-height: 1.5;
+    background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  .hidden { display: none !important; }
+  .view { animation: fade .2s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* Layout */
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100%; }
+  aside {
+    background: var(--surface); border-right: 1px solid var(--line);
+    padding: 22px 16px; display: flex; flex-direction: column; gap: 24px;
+    position: sticky; top: 0; height: 100vh; min-width: 0;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+  .logo {
+    width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none;
+    background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; box-shadow: var(--shadow);
+  }
+  .brand strong { font-size: 15px; letter-spacing: -.01em; }
+  .brand small { display: block; color: var(--muted); font-size: 12px; }
+  .nav-wrap { display: flex; flex-direction: column; gap: 4px; }
+  nav { display: flex; flex-direction: column; gap: 4px; }
+  .nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 0 10px; margin-bottom: 6px; }
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px;
+    background: none; border: 0; padding: 9px 10px; border-radius: 10px;
+    color: var(--text-2); cursor: pointer; text-align: left; font-weight: 500;
+  }
+  .nav-btn svg { width: 18px; height: 18px; flex: none; }
+  .nav-btn:hover { background: var(--surface-2); color: var(--text); }
+  .nav-btn.active { background: var(--brand-soft); color: var(--brand); }
+  .sidebar-foot { margin-top: auto; font-size: 12px; color: var(--muted); padding: 0 8px; }
+
+  main { padding: 28px 32px 60px; min-width: 0; width: 100%; max-width: 1320px; margin: 0 auto; }
+  .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: clamp(16px, 2vw, 24px); }
+  .page-head h1 { font-size: clamp(20px, 1.2vw + 16px, 26px); letter-spacing: -.02em; margin: 0 0 4px; }
+  .page-head p { margin: 0; color: var(--text-2); }
+  .grid-2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; }
+  .grid-2 > * { min-width: 0; }
+
+  /* Cards and stats */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(16px, 1.4vw, 24px); box-shadow: var(--shadow); min-width: 0; }
+  .card + .card { margin-top: 20px; }
+  .card-title { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .card-sub { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); min-width: 0; }
+  .stat span { color: var(--text-2); font-size: 12px; font-weight: 500; }
+  .stat strong { display: block; font-size: clamp(20px, 1.4vw + 14px, 28px); letter-spacing: -.02em; margin-top: 4px; }
+  .session-bar {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 16px; color: var(--text-2); font-size: 13px;
+  }
+  .session-bar strong { color: var(--text); }
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .full { grid-column: 1 / -1; }
+  .field-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+  .input, .select, .textarea {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px; outline: none; min-height: 44px;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+  .textarea { min-height: 96px; resize: vertical; }
+  .input:focus, .select:focus, .textarea:focus { border-color: var(--brand); background: var(--surface); box-shadow: 0 0 0 4px var(--brand-soft); }
+  .hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+  .error { color: var(--bad); font-size: 13px; margin: 10px 0 0; min-height: 0; }
+  .error:empty { display: none; }
+
+  .type-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .type-opt { position: relative; min-width: 0; }
+  .type-opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .type-opt label {
+    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; min-height: 44px; height: 100%;
+    border: 1px solid var(--line); border-radius: 12px; cursor: pointer; background: var(--surface);
+    font-size: 12.5px; font-weight: 600; color: var(--text-2); transition: all .15s; text-align: center;
+  }
+  .type-opt label svg { width: 22px; height: 22px; }
+  .type-opt label:hover { border-color: var(--brand); color: var(--text); }
+  .type-opt input:checked + label { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .type-opt input:focus-visible + label { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .dropzone {
+    display: block; border: 1.5px dashed var(--line); border-radius: 12px; padding: 22px; text-align: center;
+    background: var(--surface-2); cursor: pointer; transition: all .15s;
+  }
+  .dropzone:hover, .dropzone:focus-visible, .dropzone.drag { border-color: var(--brand); background: var(--brand-soft); }
+  .dropzone.drag { border-style: solid; }
+  .dropzone strong { display: block; font-size: 14px; }
+  .dropzone span { color: var(--muted); font-size: 12.5px; }
+  .file-chip { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .file-chip.show { display: flex; }
+  .file-chip .name { flex: 1 1 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .file-chip .size { color: var(--muted); font-size: 12px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px;
+    border: 1px solid transparent; background: var(--brand); color: #fff;
+    padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer;
+    transition: background .15s, transform .05s, opacity .15s; white-space: nowrap;
+  }
+  .btn:hover { background: var(--brand-600); }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+  .btn.ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
+  .btn.ghost:hover { background: var(--surface-2); }
+  .btn.ok { background: var(--ok); } .btn.ok:hover { background: #047857; }
+  .btn.warn { background: var(--warn); } .btn.warn:hover { background: #b45309; }
+  .btn.danger { background: var(--bad); } .btn.danger:hover { background: #b91c1c; }
+  .btn.sm { padding: 7px 12px; font-size: 13px; min-height: 36px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .inline-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+
+  /* Badges */
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--info-soft); color: var(--info); white-space: nowrap; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill.under_review, .pill.changes_requested { background: var(--warn-soft); color: var(--warn); }
+  .pill.approved { background: var(--ok-soft); color: var(--ok); }
+  .pill.rejected { background: var(--bad-soft); color: var(--bad); }
+  .type-tag { font-size: 12px; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px; text-transform: capitalize; }
+  .version-badge { font-size: 11px; background: var(--surface-2); border: 1px solid var(--line); padding: 2px 6px; border-radius: 4px; color: var(--text-2); font-family: var(--mono); }
+  .mono { font-family: var(--mono); font-size: 12.5px; color: var(--text-2); }
+  .role-tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); font-weight: 700; text-transform: capitalize; }
+  .role-tag.reviewer { background: var(--info-soft); color: var(--info); }
+  .note-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+  .note-tag.internal { background: var(--info-soft); color: var(--info); }
+  .note-tag.submitter { background: var(--ok-soft); color: var(--ok); }
+
+  /* Queue */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .toolbar .search { flex: 1 1 200px; }
+  .toolbar .select { width: auto; min-width: 140px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  td { padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr.row { cursor: pointer; transition: background .12s; }
+  tbody tr.row:hover { background: var(--surface-2); }
+  tbody tr.row:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+  tbody tr.sel { background: var(--brand-soft); }
+  .title { font-weight: 600; overflow-wrap: anywhere; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .empty { text-align: center; padding: 40px 16px; color: var(--muted); }
+  .empty strong { display: block; color: var(--text-2); margin-bottom: 4px; font-size: 14px; }
+  .kbd-hint { font-size: 11.5px; color: var(--muted); margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .kbd { display: inline-block; background: var(--surface-2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+
+  /* Detail */
+  .detail-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  .detail-head h2 { font-size: 18px; letter-spacing: -.01em; margin: 0 0 6px; overflow-wrap: anywhere; }
+  .status-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .submitter { display: flex; align-items: center; gap: 10px; margin: 16px 0; padding: 12px; background: var(--surface-2); border-radius: 12px; border: 1px solid var(--line); }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-weight: 700; flex: none; font-size: 13px; }
+  .who { font-weight: 600; }
+  .email { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+  .desc { color: var(--text-2); margin: 0 0 14px; overflow-wrap: anywhere; }
+  .body-box { white-space: pre-wrap; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; max-height: 240px; overflow: auto; overflow-wrap: anywhere; }
+  .attach { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+  .attach .name { font-weight: 600; flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; }
+  .preview { display: block; max-width: 100%; border-radius: 12px; border: 1px solid var(--line); margin-top: 12px; }
+  .section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 10px; }
+  .decision-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+  .decision-bar .btn { flex: 1 1 auto; }
+  .assign-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .assign-row .select { flex: 1 1 200px; width: auto; }
+  .note-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .note-row .input { flex: 1 1 180px; min-width: 0; }
+  .note-row .vis-select { flex: 0 0 auto; width: auto; min-width: 150px; }
+  .note-list { list-style: none; margin: 0; padding: 0; }
+  .note-list li { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; font-size: 13px; overflow-wrap: anywhere; }
+  .note-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11.5px; margin-bottom: 4px; flex-wrap: wrap; }
+  .timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+  .timeline li { position: relative; padding: 0 0 16px 22px; font-size: 13.5px; overflow-wrap: anywhere; }
+  .timeline li::before { content: ""; position: absolute; left: 4px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .timeline li::after { content: ""; position: absolute; left: 7.5px; top: 18px; bottom: 0; width: 1px; background: var(--line); }
+  .timeline li:last-child::after { display: none; }
+  .timeline time { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  /* Track and resubmit */
+  .lookup { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+  .lookup .input.code { text-transform: uppercase; font-family: var(--mono); letter-spacing: .04em; }
+  @media (max-width: 720px) { .lookup { grid-template-columns: 1fr; } }
+  .result-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 20px 0 6px; }
+  .result-head h3 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+  .resubmit-card { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: var(--radius); padding: 16px 18px; margin-top: 20px; }
+  .resubmit-card h4 { margin: 0 0 4px; font-size: 14px; color: var(--warn); }
+  .resubmit-card > p { margin: 0 0 14px; font-size: 13px; color: var(--text-2); }
+  .resubmit-card .dropzone { background: var(--surface); }
+  .success { display: flex; gap: 14px; align-items: flex-start; background: var(--ok-soft); border: 1px solid var(--ok-line); border-radius: var(--radius); padding: 16px 18px; margin-top: 20px; }
+  .success .check { width: 32px; height: 32px; border-radius: 50%; background: var(--ok); color: #fff; display: grid; place-items: center; flex: none; }
+  .success strong { display: block; }
+  .success p { margin: 4px 0 0; color: var(--text-2); }
+  .ref-badge { font-family: var(--mono); background: var(--surface); border: 1px solid var(--line); padding: 3px 8px; border-radius: 6px; font-weight: 600; display: inline-block; }
+
+  /* Sign in and team */
+  .auth-wrap { display: grid; place-items: center; min-height: min(70vh, 640px); padding: 12px 0; }
+  .auth-card { width: 100%; max-width: 420px; padding: clamp(22px, 4vw, 32px); }
+  .auth-card h1 { font-size: 20px; margin: 16px 0 4px; letter-spacing: -.01em; }
+  .auth-card .card-sub { margin-bottom: 0; }
+  .auth-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; }
+  .reviewer-list { list-style: none; margin: 0; padding: 0; }
+  .reviewer-list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .reviewer-list li:last-child { border-bottom: 0; }
+  .reviewer-list .info { flex: 1 1 180px; min-width: 0; }
+  .reviewer-list .info strong { display: block; overflow-wrap: anywhere; }
+  .reviewer-list .info small { color: var(--muted); overflow-wrap: anywhere; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 20px); opacity: 0;
+    background: var(--text); color: var(--surface); padding: 11px 16px; border-radius: 12px;
+    box-shadow: var(--shadow-lg); font-weight: 500; transition: all .25s; pointer-events: none; z-index: 30;
+    max-width: calc(100vw - 32px); text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .app { grid-template-columns: 200px 1fr; }
+    main { padding: 24px 24px 48px; }
+    .type-picker { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  }
+  @media (max-width: 1000px) { .grid-2 { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) {
+    .app { display: block; }
+    aside {
+      position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 20;
+      height: auto; flex-direction: row; align-items: stretch; gap: 0;
+      padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+      border-right: 0; border-top: 1px solid var(--line);
+      background: var(--surface);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    }
+    .brand, .nav-label, .sidebar-foot { display: none; }
+    .nav-wrap { flex: 1; min-width: 0; }
+    nav { flex-direction: row; gap: 4px; }
+    .nav-btn { flex: 1; flex-direction: column; justify-content: center; gap: 3px; padding: 8px 4px; font-size: 11.5px; min-height: 56px; border-radius: 12px; text-align: center; }
+    .nav-btn svg { width: 20px; height: 20px; }
+    main { padding: 20px 16px calc(96px + env(safe-area-inset-bottom)); }
+    .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  }
+  @media (max-width: 640px) {
+    .page-head { flex-direction: column; align-items: stretch; }
+    .card + .card { margin-top: 16px; }
+    .stats { gap: 10px; }
+    .stat { padding: 14px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .type-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .type-opt label { padding: 12px 4px; font-size: 12px; min-height: 64px; }
+    .input, .select, .textarea { font-size: 16px; }
+    .textarea { min-height: 120px; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar .select { width: 100%; }
+    .toolbar .search { flex: none; }
+    table, tbody { display: block; width: 100%; }
+    thead { display: none; }
+    tbody tr.row {
+      display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center;
+      padding: 14px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    }
+    tbody tr.row.sel { border-color: var(--brand); }
+    tbody tr.row td { display: contents; }
+    tbody tr.row td:first-child { grid-column: 1 / -1; padding: 0; border: 0; }
+    tbody tr.row td:nth-child(2) { padding: 0; border: 0; }
+    tbody tr.row td:nth-child(3) { padding: 0; border: 0; justify-self: end; }
+    tbody tr.empty-row, tbody tr.empty-row td { display: block; padding: 0; border: 0; background: none; }
+    .detail-head { flex-direction: column; }
+    .decision-bar { display: grid; grid-template-columns: 1fr 1fr; }
+    .decision-bar .btn { width: 100%; min-height: 46px; }
+    .decision-bar .btn:last-child { grid-column: 1 / -1; }
+    .note-row { flex-direction: column; }
+    .note-row .vis-select { width: 100%; }
+    .note-row .btn { width: 100%; }
+    .body-box { max-height: 40vh; }
+    .actions { flex-direction: column-reverse; }
+    .actions .btn { width: 100%; }
+    .file-chip .size { flex: 1; }
+    .assign-row .select { width: 100%; }
+  }
+  @media (max-width: 380px) {
+    main { padding-left: 12px; padding-right: 12px; }
+    .card { padding: 14px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stat span { font-size: 11px; }
+    .type-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .decision-bar { grid-template-columns: 1fr; }
+    .decision-bar .btn:last-child { grid-column: auto; }
+  }
+  @media (min-width: 1600px) {
+    .app { grid-template-columns: 260px 1fr; }
+    main { padding: 36px 48px 60px; }
+  }
+  @media (hover: none) {
+    tbody tr.row:hover { background: transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l6 6v10H4z"/><path d="M14 4v6h6"/></svg>
+      </div>
+      <div>
+        <strong>Content Desk</strong>
+        <small>Submissions &amp; review</small>
+      </div>
+    </div>
+
+    <div class="nav-wrap">
+      <div class="nav-label" id="navLabel">Workspace</div>
+      <nav aria-labelledby="navLabel">
+        <button type="button" class="nav-btn active" data-view="submit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          New submission
+        </button>
+        <button type="button" class="nav-btn" data-view="track">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Track status
+        </button>
+        <button type="button" class="nav-btn" data-view="review">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>
+          IT review
+        </button>
+        <button type="button" class="nav-btn hidden" id="navManage" data-view="manage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 11h4M19 9v4"/></svg>
+          Manage team
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-foot">Supabase-backed</div>
+  </aside>
+
+  <main>
+
+    <!-- SUBMIT -->
+    <section id="view-submit" class="view">
+      <div class="page-head">
+        <div>
+          <h1>New submission</h1>
+          <p>Send a form, article, document, picture, or video for review.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <form id="submitForm" novalidate>
+          <div class="field-label" style="margin-bottom:10px" id="typeLabel">What are you submitting?</div>
+          <div class="type-picker" role="radiogroup" aria-labelledby="typeLabel">
+            <div class="type-opt"><input type="radio" name="type" id="t-form" value="form" checked><label for="t-form"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Form</label></div>
+            <div class="type-opt"><input type="radio" name="type" id="t-article" value="article"><label for="t-article"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h9l4 4v12H6z"/><path d="M9 12h7M9 16h5"/></svg>Article</label></div>
+            <div class="type-opt"><input type="radio" name="type" id="t-document" value="document"><label for="t-document"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Document</label></div>
+            <div class="type-opt"><input type="radio" name="type" id="t-picture" value="picture"><label for="t-picture"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 8"/></svg>Picture</label></div>
+            <div class="type-opt"><input type="radio" name="type" id="t-video" value="video"><label for="t-video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>Video</label></div>
+          </div>
+
+          <div class="form-grid" style="margin-top:22px">
+            <div>
+              <label class="field-label" for="name">Your name</label>
+              <input class="input" id="name" autocomplete="name" maxlength="120" required>
+            </div>
+            <div>
+              <label class="field-label" for="email">Work email</label>
+              <input class="input" id="email" type="email" autocomplete="email" maxlength="254" required>
+            </div>
+            <div class="full">
+              <label class="field-label" for="title">Title</label>
+              <input class="input" id="title" placeholder="e.g. Q4 onboarding form" maxlength="200" required>
+            </div>
+            <div class="full">
+              <label class="field-label" for="description">Short description</label>
+              <textarea class="textarea" id="description" style="min-height:72px" maxlength="2000" placeholder="Context the reviewer should know"></textarea>
+            </div>
+            <div>
+              <label class="field-label" for="destination">Intended destination</label>
+              <select class="select" id="destination">
+                <option>Website</option>
+                <option>Shared drive</option>
+                <option>Database</option>
+                <option>Email to department</option>
+              </select>
+            </div>
+            <div id="bodyField" class="full hidden">
+              <label class="field-label" for="body">Article body</label>
+              <textarea class="textarea" id="body" style="min-height:180px" maxlength="100000"></textarea>
+            </div>
+            <div id="fileField" class="full">
+              <span class="field-label" id="fileLabel">File</span>
+              <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-describedby="fileHint">
+                <strong>Drop a file here or press Enter to browse</strong>
+                <span id="fileHint"></span>
+              </div>
+              <input type="file" id="file" class="sr-only" tabindex="-1" aria-label="Choose a file">
+              <div class="file-chip" id="fileChip">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+                <span class="name" id="fileName"></span>
+                <span class="size" id="fileSize"></span>
+                <button type="button" class="btn ghost sm" id="removeFile">Remove</button>
+              </div>
+            </div>
+          </div>
+
+          <p class="error" id="submitError" role="alert"></p>
+          <div class="actions">
+            <button type="submit" class="btn" id="submitBtn">Submit for review</button>
+            <button type="button" class="btn ghost" id="clearForm">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="success hidden" id="receipt" role="status">
+        <div class="check" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>
+        </div>
+        <div>
+          <strong>Submission received</strong>
+          <p>Your reference is <span class="ref-badge" id="receiptRef"></span>. Keep it with your email address to track progress.</p>
+          <div class="inline-actions">
+            <button type="button" class="btn ghost sm" id="copyRefBtn">Copy reference</button>
+            <button type="button" class="btn ghost sm" id="trackFromReceipt">Track this submission</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRACK -->
+    <section id="view-track" class="view hidden">
+      <div class="page-head">
+        <div>
+          <h1>Track status</h1>
+          <p>Enter your reference number and the email you submitted with.</p>
+        </div>
+      </div>
+      <div class="card">
+        <form id="trackForm" novalidate>
+          <div class="lookup">
+            <div>
+              <label class="field-label" for="trackRef">Reference</label>
+              <input class="input code" id="trackRef" placeholder="CD-XXXXXX" autocomplete="off" spellcheck="false" maxlength="12">
+            </div>
+            <div>
+              <label class="field-label" for="trackEmail">Email</label>
+              <input class="input" id="trackEmail" type="email" autocomplete="email" maxlength="254">
+            </div>
+            <button type="submit" class="btn" id="trackBtn">Look up</button>
+          </div>
+        </form>
+        <p class="error" id="trackError" role="alert"></p>
+        <div id="trackResult"></div>
+      </div>
+    </section>
+
+    <!-- SIGN IN -->
+    <section id="view-signin" class="view hidden">
+      <div class="auth-wrap">
+        <div class="card auth-card">
+          <div class="auth-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          </div>
+          <h1>IT reviewer sign in</h1>
+          <p class="card-sub">Only authorised IT staff can review submissions. Accounts are created by an admin.</p>
+          <form id="signInForm" novalidate>
+            <label class="field-label" for="authEmail" style="margin-top:16px">Work email</label>
+            <input class="input" id="authEmail" type="email" autocomplete="username" spellcheck="false">
+            <label class="field-label" for="authPass" style="margin-top:16px">Password</label>
+            <input class="input" id="authPass" type="password" autocomplete="current-password">
+            <p class="error" id="authError" role="alert"></p>
+            <button class="btn" type="submit" id="authBtn" style="width:100%;margin-top:18px">Sign in</button>
+          </form>
+          <p class="hint" style="text-align:center"><button type="button" class="btn ghost sm" id="forgotBtn" style="margin-top:12px">Forgot password?</button></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section id="view-review" class="view hidden">
+      <div class="page-head">
+        <div>
+          <h1>IT review</h1>
+          <p>Check submitted material before it reaches its destination.</p>
+        </div>
+      </div>
+
+      <div class="session-bar">
+        <span id="whoami"></span>
+        <button type="button" class="btn ghost sm" id="signOutBtn">Sign out</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>Total</span><strong id="stTotal">0</strong></div>
+        <div class="stat"><span>Awaiting review</span><strong id="stPending">0</strong></div>
+        <div class="stat"><span>In progress</span><strong id="stProgress">0</strong></div>
+        <div class="stat"><span>Approved</span><strong id="stApproved">0</strong></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="toolbar">
+            <label class="sr-only" for="search">Search submissions</label>
+            <input class="input search" id="search" type="search" placeholder="Search title, name, email, or reference" autocomplete="off">
+            <label class="sr-only" for="filterStatus">Filter by status</label>
+            <select class="select" id="filterStatus">
+              <option value="all">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="under_review">Under review</option>
+              <option value="changes_requested">Changes requested</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <label class="sr-only" for="filterType">Filter by type</label>
+            <select class="select" id="filterType">
+              <option value="all">All types</option>
+              <option value="form">Form</option>
+              <option value="article">Article</option>
+              <option value="document">Document</option>
+              <option value="picture">Picture</option>
+              <option value="video">Video</option>
+            </select>
+            <label class="sr-only" for="filterAssignee">Filter by assignee</label>
+            <select class="select" id="filterAssignee">
+              <option value="all">Anyone</option>
+              <option value="me">Assigned to me</option>
+              <option value="unassigned">Unassigned</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <caption class="sr-only">Submissions</caption>
+              <thead><tr><th scope="col">Submission</th><th scope="col">Type</th><th scope="col">Status</th></tr></thead>
+              <tbody id="queueBody"></tbody>
+            </table>
+          </div>
+          <div class="kbd-hint">
+            <span><span class="kbd">J</span>/<span class="kbd">K</span> move</span>
+            <span><span class="kbd">/</span> search</span>
+            <span><span class="kbd">Alt</span>+<span class="kbd">A</span> approve</span>
+            <span><span class="kbd">Alt</span>+<span class="kbd">R</span> reject</span>
+            <span><span class="kbd">Alt</span>+<span class="kbd">C</span> changes</span>
+            <span><span class="kbd">Esc</span> clear</span>
+          </div>
+        </div>
+
+        <div class="card" id="detail"></div>
+      </div>
+    </section>
+
+    <!-- MANAGE -->
+    <section id="view-manage" class="view hidden">
+      <div class="page-head">
+        <div>
+          <h1>Manage team</h1>
+          <p>Add or remove reviewers. Admins only.</p>
+        </div>
+      </div>
+
+      <div class="card" id="noPermCard">
+        <div class="empty"><strong>Admins only</strong>You don't have permission to manage reviewers.</div>
+      </div>
+
+      <div id="manageWrap" class="hidden">
+        <div class="card">
+          <h2 class="card-title">Reviewers</h2>
+          <p class="card-sub">People who can sign in and review submissions.</p>
+          <ul class="reviewer-list" id="reviewerList"></ul>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Add reviewer</h2>
+          <p class="card-sub">Creates the account. Share the temporary password securely.</p>
+          <form id="addReviewerForm" novalidate>
+            <div class="form-grid">
+              <div>
+                <label class="field-label" for="newRevName">Full name</label>
+                <input class="input" id="newRevName" autocomplete="off" maxlength="120">
+              </div>
+              <div>
+                <label class="field-label" for="newRevEmail">Work email</label>
+                <input class="input" id="newRevEmail" type="email" autocomplete="off" spellcheck="false" maxlength="254">
+              </div>
+              <div>
+                <label class="field-label" for="newRevPass">Temporary password</label>
+                <input class="input" id="newRevPass" type="password" autocomplete="new-password" minlength="8">
+                <p class="hint">At least 8 characters.</p>
+              </div>
+              <div>
+                <label class="field-label" for="newRevRole">Role</label>
+                <select class="select" id="newRevRole">
+                  <option value="reviewer">Reviewer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <p class="error" id="addReviewerError" role="alert"></p>
+            <div class="actions">
+              <button type="submit" class="btn">Add reviewer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ── Configure ───────────────────────────────────────────────
+  const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+  const BUCKET = "submissions";
+
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+  });
+
+  // ── Constants ───────────────────────────────────────────────
+  const MB = 1048576;
+  const STATUS_LABEL = {
+    pending: "Pending", under_review: "Under review", changes_requested: "Changes requested",
+    approved: "Approved", rejected: "Rejected"
+  };
+  const RULES = {
+    form:     { accept: ".pdf,.doc,.docx,.xls,.xlsx", max: 10,  hint: "PDF or Office document, up to 10 MB", required: true },
+    article:  { accept: ".doc,.docx,.pdf,.txt,.md",   max: 10,  hint: "Optional attachment, up to 10 MB",    required: false },
+    document: { accept: ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt", max: 25, hint: "Up to 25 MB", required: true },
+    picture:  { accept: "image/*", max: 15,  hint: "JPG, PNG, or WEBP, up to 15 MB", required: true },
+    video:    { accept: "video/*", max: 200, hint: "MP4, MOV, or WEBM, up to 200 MB", required: true }
+  };
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const SUB_SELECT = "*, notes:submission_notes(*), history:submission_history(*), versions:submission_versions(*)";
+
+  // ── Helpers ─────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = iso => {
+    const d = new Date(iso);
+    return isNaN(d) ? "—" : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  };
+  const initials = n => (String(n || "?").trim().split(/\s+/).map(p => p[0]).join("").slice(0, 2).toUpperCase()) || "?";
+  const bytes = b => (b >= MB ? (b / MB).toFixed(1) + " MB" : Math.max(1, Math.round((b || 0) / 1024)) + " KB");
+  const pill = s => `<span class="pill ${esc(s)}">${esc(STATUS_LABEL[s] || s)}</span>`;
+  const errMsg = e => (e && e.message) || "Something went wrong. Please try again.";
+  const uid = () => (window.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+  function safeName(name) {
+    const dot = name.lastIndexOf(".");
+    const stem = (dot > 0 ? name.slice(0, dot) : name)
+      .replace(/[^A-Za-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80) || "file";
+    const ext = dot > 0 ? name.slice(dot).toLowerCase().replace(/[^.a-z0-9]/g, "").slice(0, 12) : "";
+    return stem + ext;
+  }
+
+  function matchesAccept(file, accept) {
+    const rules = accept.split(",").map(a => a.trim().toLowerCase()).filter(Boolean);
+    const name = file.name.toLowerCase();
+    const type = (file.type || "").toLowerCase();
+    return rules.some(rule => {
+      if (rule.startsWith(".")) return name.endsWith(rule);
+      if (rule.endsWith("/*")) return type.startsWith(rule.slice(0, -1));
+      return type === rule;
+    });
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  async function copyText(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      toast("Copied " + text);
+    } catch (e) {
+      toast("Could not copy. Select the text and copy it manually.");
+    }
+  }
+
+  async function withButton(btn, busyLabel, fn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    if (busyLabel) btn.textContent = busyLabel;
+    try { return await fn(); }
+    finally { btn.disabled = false; btn.textContent = original; }
+  }
+
+  // Edge Function errors carry the server's JSON message in the response body
+  async function functionError(error) {
+    try {
+      const body = await error.context.json();
+      if (body && body.error) return body.error;
+    } catch (_) { /* fall through */ }
+    return error.message || "Request failed";
+  }
+
+  // Short-lived signed URLs, cached so re-renders don't refetch
+  const urlCache = new Map();
+  async function signedUrl(path) {
+    const hit = urlCache.get(path);
+    if (hit && hit.exp > Date.now() + 60000) return hit.url;
+    const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(path, 3600);
+    if (error) throw error;
+    urlCache.set(path, { url: data.signedUrl, exp: Date.now() + 3600000 });
+    return data.signedUrl;
+  }
+
+  // Reusable file picker: keyboard accessible, drag and drop, validated
+  function createFilePicker({ zone, input, chip, nameEl, sizeEl, removeBtn, getRule, onError }) {
+    let file = null;
+
+    const problem = f => {
+      const rule = getRule();
+      if (!matchesAccept(f, rule.accept)) return `"${f.name}" isn't an accepted file type. ${rule.hint}.`;
+      if (f.size > rule.max * MB) return `"${f.name}" is larger than ${rule.max} MB.`;
+      return null;
+    };
+
+    function set(f) {
+      file = f;
+      if (f) {
+        nameEl.textContent = f.name;
+        sizeEl.textContent = bytes(f.size);
+        chip.classList.add("show");
+        zone.classList.add("hidden");
+      } else {
+        chip.classList.remove("show");
+        zone.classList.remove("hidden", "drag");
+        input.value = "";
+      }
+    }
+
+    function pick(f) {
+      const msg = problem(f);
+      if (msg) { onError(msg); return false; }
+      set(f);
+      return true;
+    }
+
+    input.addEventListener("change", () => { if (input.files[0]) pick(input.files[0]); });
+    zone.addEventListener("click", () => input.click());
+    zone.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); }
+    });
+    ["dragenter", "dragover"].forEach(ev =>
+      zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add("drag"); }));
+    ["dragleave", "drop"].forEach(ev =>
+      zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove("drag"); }));
+    zone.addEventListener("drop", e => {
+      const f = e.dataTransfer && e.dataTransfer.files[0];
+      if (f) pick(f);
+    });
+    removeBtn.addEventListener("click", () => set(null));
+
+    return {
+      get: () => file,
+      clear: () => set(null),
+      // Called when the type changes: drop the file if it no longer fits
+      recheck() {
+        if (file && problem(file)) {
+          set(null);
+          return "The attached file doesn't match this type and was removed.";
+        }
+        return null;
+      }
+    };
+  }
+
+  // ── State ───────────────────────────────────────────────────
+  let user = null;          // Supabase auth user
+  let profile = null;       // row from profiles (role lives here)
+  let submissions = [];
+  let reviewers = [];
+  let selectedRef = null;
+  let pendingView = null;
+  let channel = null;
+  let busy = false;
+  let detailToken = 0;
+  let trackCtx = null;
+  let lastSubmitted = null;
+
+  const isReviewer = () => !!(user && profile);
+  const isAdmin = () => isReviewer() && profile.role === "admin";
+  const currentSubmission = () => submissions.find(x => x.ref === selectedRef) || null;
+
+  // ── Data access ─────────────────────────────────────────────
+  async function fetchSubmissions() {
+    const { data, error } = await sb.from("submissions").select(SUB_SELECT).order("submitted_at", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function fetchReviewers() {
+    const { data, error } = await sb.from("profiles").select("id, name, email, role").order("created_at");
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function loadProfile(session) {
+    user = session.user;
+    const { data, error } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    if (error || !data) {
+      // Signed in but not a reviewer: sign out so they can't reach the data
+      await sb.auth.signOut();
+      user = null; profile = null;
+      return false;
+    }
+    profile = data;
+    return true;
+  }
+
+  function updateNav() {
+    $("navManage").classList.toggle("hidden", !isAdmin());
+  }
+
+  // ── Auth ────────────────────────────────────────────────────
+  sb.auth.onAuthStateChange((event) => {
+    if (event !== "SIGNED_OUT") return;
+    user = null; profile = null;
+    submissions = []; reviewers = [];
+    selectedRef = null; detailToken++;
+    unsubscribe();
+    updateNav();
+    const onReviewPage = ["review", "manage"].some(v => !$("view-" + v).classList.contains("hidden"));
+    if (onReviewPage) showView("submit");
+  });
+
+  $("signInForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (busy) return;
+    const err = $("authError");
+    err.textContent = "";
+    const email = $("authEmail").value.trim().toLowerCase();
+    const pw = $("authPass").value;
+    if (!EMAIL_RE.test(email)) { err.textContent = "Enter a valid email address."; $("authEmail").focus(); return; }
+    if (!pw) { err.textContent = "Enter your password."; $("authPass").focus(); return; }
+
+    busy = true;
+    try {
+      await withButton($("authBtn"), "Signing in…", async () => {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+        if (error) { err.textContent = "Email or password is incorrect."; return; }
+        const ok = await loadProfile(data.session);
+        if (!ok) { err.textContent = "This account doesn't have reviewer access. Ask an admin to add you."; return; }
+        $("authPass").value = "";
+        updateNav();
+        const target = pendingView || "review";
+        pendingView = null;
+        toast(`Signed in as ${profile.name}`);
+        showView(target);
+      });
+    } catch (ex) {
+      err.textContent = errMsg(ex);
+    } finally {
+      busy = false;
+    }
+  });
+
+  $("forgotBtn").addEventListener("click", async () => {
+    const email = $("authEmail").value.trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) { $("authError").textContent = "Enter your work email first."; return; }
+    // Same message whether or not the account exists, to avoid revealing accounts
+    await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split("#")[0] });
+    toast("If that account exists, a reset link is on its way.");
+  });
+
+  $("signOutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    toast("Signed out");
+  });
+
+  // ── Navigation ──────────────────────────────────────────────
+  const VIEWS = ["submit", "track", "review", "signin", "manage"];
+
+  document.querySelectorAll(".nav-btn").forEach(b =>
+    b.addEventListener("click", () => showView(b.dataset.view)));
+
+  function showView(name) {
+    if (!VIEWS.includes(name)) name = "submit";
+    if ((name === "review" || name === "manage") && !isReviewer()) {
+      pendingView = name;
+      name = "signin";
+    }
+    if (name === "signin" && isReviewer()) name = "review";
+
+    const navKey = name === "signin" ? "review" : name;
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === navKey));
+    VIEWS.forEach(v => $("view-" + v).classList.toggle("hidden", v !== name));
+    updateNav();
+
+    if (isReviewer()) {
+      $("whoami").innerHTML =
+        `Signed in as <strong>${esc(profile.name)}</strong> · ${esc(profile.email)} · <span class="role-tag ${esc(profile.role)}">${esc(profile.role)}</span>`;
+    }
+    if (name === "review") refreshReview();
+    if (name === "manage") refreshManage();
+  }
+
+  // ── Submit ──────────────────────────────────────────────────
+  const form = $("submitForm");
+
+  function currentType() {
+    const checked = form.querySelector('input[name="type"]:checked');
+    return checked ? checked.value : "form";
+  }
+
+  function syncTypeFields() {
+    const t = currentType();
+    const rule = RULES[t];
+    $("bodyField").classList.toggle("hidden", t !== "article");
+    $("fileLabel").textContent = rule.required ? "File" : "Attachment (optional)";
+    $("fileHint").textContent = rule.hint;
+    $("file").accept = rule.accept;
+  }
+
+  const picker = createFilePicker({
+    zone: $("dropzone"), input: $("file"), chip: $("fileChip"),
+    nameEl: $("fileName"), sizeEl: $("fileSize"), removeBtn: $("removeFile"),
+    getRule: () => RULES[currentType()],
+    onError: msg => { $("submitError").textContent = msg; }
+  });
+
+  form.querySelectorAll('input[name="type"]').forEach(r => r.addEventListener("change", () => {
+    syncTypeFields();
+    $("submitError").textContent = picker.recheck() || "";
+  }));
+
+  $("clearForm").addEventListener("click", () => {
+    form.reset();
+    picker.clear();
+    $("submitError").textContent = "";
+    $("receipt").classList.add("hidden");
+    syncTypeFields();
+  });
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (busy) return;
+    const err = $("submitError");
+    err.textContent = "";
+    const fail = (id, msg) => { err.textContent = msg; if (id) $(id).focus(); };
+
+    const t = currentType();
+    const rule = RULES[t];
+    const v = {
+      name: $("name").value.trim(),
+      email: $("email").value.trim().toLowerCase(),
+      title: $("title").value.trim(),
+      description: $("description").value.trim(),
+      body: $("body").value.trim(),
+      destination: $("destination").value
+    };
+    const file = picker.get();
+
+    if (!v.name) return fail("name", "Please enter your name.");
+    if (!EMAIL_RE.test(v.email)) return fail("email", "Enter a valid email address.");
+    if (!v.title) return fail("title", "Please give your submission a title.");
+    if (t === "article" && !v.body) return fail("body", "Articles need a body.");
+    if (rule.required && !file) return fail(null, "Please attach a file.");
+
+    busy = true;
+    try {
+      await withButton($("submitBtn"), "Submitting…", async () => {
+        let path = null;
+        if (file) {
+          path = `incoming/${uid()}/${safeName(file.name)}`;
+          const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, {
+            contentType: file.type || undefined, upsert: false
+          });
+          if (upErr) throw upErr;
+        }
+
+        const { data: ref, error } = await sb.rpc("create_submission", {
+          p_type: t,
+          p_title: v.title,
+          p_name: v.name,
+          p_email: v.email,
+          p_description: v.description || null,
+          p_body: t === "article" ? v.body : null,
+          p_destination: v.destination,
+          p_file_path: path,
+          p_file_name: file ? file.name : null,
+          p_file_size: file ? file.size : null,
+          p_file_mime: file ? (file.type || null) : null
+        });
+        if (error) throw error;
+
+        lastSubmitted = { ref, email: v.email };
+        form.reset();
+        form.querySelector(`input[name="type"][value="${t}"]`).checked = true;
+        picker.clear();
+        syncTypeFields();
+        $("receiptRef").textContent = ref;
+        $("receipt").classList.remove("hidden");
+        $("receipt").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        toast("Submission received");
+      });
+    } catch (ex) {
+      err.textContent = errMsg(ex);
+    } finally {
+      busy = false;
+    }
+  });
+
+  $("copyRefBtn").addEventListener("click", () => copyText($("receiptRef").textContent));
+  $("trackFromReceipt").addEventListener("click", () => {
+    if (lastSubmitted) {
+      $("trackRef").value = lastSubmitted.ref;
+      $("trackEmail").value = lastSubmitted.email;
+    }
+    showView("track");
+  });
+
+  // ── Track ───────────────────────────────────────────────────
+  $("trackRef").addEventListener("input", e => { e.target.value = e.target.value.toUpperCase(); });
+
+  $("trackForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = $("trackError");
+    const result = $("trackResult");
+    msg.textContent = "";
+    const ref = $("trackRef").value.trim().toUpperCase();
+    const email = $("trackEmail").value.trim().toLowerCase();
+    if (!ref) { msg.textContent = "Enter your reference number."; $("trackRef").focus(); return; }
+    if (!EMAIL_RE.test(email)) { msg.textContent = "Enter the email you submitted with."; $("trackEmail").focus(); return; }
+
+    try {
+      await withButton($("trackBtn"), "Looking up…", async () => {
+        const { data, error } = await sb.rpc("get_submission", { p_ref: ref, p_email: email });
+        if (error) throw error;
+        if (!data) {
+          result.innerHTML = "";
+          trackCtx = null;
+          msg.textContent = "No submission matches those details.";
+          return;
+        }
+        trackCtx = { ref, email };
+        renderTrack(data);
+      });
+    } catch (ex) {
+      msg.textContent = errMsg(ex);
+    }
+  });
+
+  function renderTrack(d) {
+    const history = (d.history || []).map(h =>
+      `<li>${esc(h.text)}<time>${fmt(h.at)} · ${esc(h.by)}</time></li>`).join("")
+      || `<li>No activity yet.<time>${fmt(d.submitted_at)}</time></li>`;
+
+    const messages = d.messages || [];
+    const messagesHtml = messages.length ? `
+      <div class="section-label">Messages from reviewers</div>
+      <ul class="note-list">
+        ${messages.map(m => `<li><div class="note-meta"><span>${esc(m.by)}</span><span>${fmt(m.at)}</span></div>${esc(m.text)}</li>`).join("")}
+      </ul>` : "";
+
+    const resubmitHtml = d.status === "changes_requested" ? `
+      <div class="resubmit-card">
+        <h4>Changes requested</h4>
+        <p>Upload a revised file and it will go back into the review queue.</p>
+        <form id="resubmitForm" novalidate>
+          <span class="field-label" id="resubmitLabel">Revised file (${esc(RULES[d.type].hint.toLowerCase())})</span>
+          <div class="dropzone" id="resubmitZone" role="button" tabindex="0">
+            <strong>Drop the revised file here or press Enter to browse</strong>
+            <span>${esc(RULES[d.type].hint)}</span>
+          </div>
+          <input type="file" id="resubmitFile" class="sr-only" tabindex="-1" accept="${esc(RULES[d.type].accept)}" aria-label="Choose revised file">
+          <div class="file-chip" id="resubmitChip">
+            <span class="name" id="resubmitName"></span>
+            <span class="size" id="resubmitSize"></span>
+            <button type="button" class="btn ghost sm" id="resubmitRemove">Remove</button>
+          </div>
+          <label class="field-label" for="resubmitNote" style="margin-top:12px">Note to reviewer (optional)</label>
+          <textarea class="textarea" id="resubmitNote" style="min-height:72px" maxlength="2000" placeholder="What did you change?"></textarea>
+          <p class="error" id="resubmitError" role="alert"></p>
+          <div class="inline-actions">
+            <button type="submit" class="btn" id="resubmitBtn">Resubmit for review</button>
+          </div>
+        </form>
+      </div>` : "";
+
+    $("trackResult").innerHTML = `
+      <div class="result-head">
+        <h3>${esc(d.title)}</h3>
+        <span class="type-tag">${esc(d.type)}</span>
+        <span class="version-badge">v${esc(d.version)}</span>
+        ${pill(d.status)}
+      </div>
+      <p class="card-sub" style="margin:0 0 12px">Submitted ${fmt(d.submitted_at)} for ${esc(d.destination)}</p>
+      <div class="inline-actions" style="margin:0 0 16px">
+        <button type="button" class="btn ghost sm" id="trackCopy">Copy reference</button>
+      </div>
+      ${messagesHtml}
+      <div class="section-label">History</div>
+      <ul class="timeline">${history}</ul>
+      ${resubmitHtml}`;
+
+    $("trackCopy").addEventListener("click", () => copyText(d.ref));
+
+    if (d.status === "changes_requested") bindResubmit(d);
+  }
+
+  function bindResubmit(d) {
+    const rpicker = createFilePicker({
+      zone: $("resubmitZone"), input: $("resubmitFile"), chip: $("resubmitChip"),
+      nameEl: $("resubmitName"), sizeEl: $("resubmitSize"), removeBtn: $("resubmitRemove"),
+      getRule: () => RULES[d.type],
+      onError: msg => { $("resubmitError").textContent = msg; }
+    });
+
+    $("resubmitForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      if (busy) return;
+      const err = $("resubmitError");
+      err.textContent = "";
+      const file = rpicker.get();
+      const note = $("resubmitNote").value.trim();
+      if (!file && !d.file_name) { err.textContent = "Please attach a revised file."; return; }
+
+      busy = true;
+      try {
+        await withButton($("resubmitBtn"), "Sending…", async () => {
+          let path = null;
+          if (file) {
+            path = `incoming/${uid()}/${safeName(file.name)}`;
+            const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, {
+              contentType: file.type || undefined, upsert: false
+            });
+            if (upErr) throw upErr;
+          }
+          const { error } = await sb.rpc("resubmit_submission", {
+            p_ref: trackCtx.ref,
+            p_email: trackCtx.email,
+            p_file_path: path,
+            p_file_name: file ? file.name : null,
+            p_file_size: file ? file.size : null,
+            p_file_mime: file ? (file.type || null) : null,
+            p_note: note || null
+          });
+          if (error) throw error;
+          toast("Resubmitted for review");
+        });
+
+        const { data, error } = await sb.rpc("get_submission", { p_ref: trackCtx.ref, p_email: trackCtx.email });
+        if (!error && data) renderTrack(data);
+      } catch (ex) {
+        err.textContent = errMsg(ex);
+      } finally {
+        busy = false;
+      }
+    });
+  }
+
+  // ── Review ──────────────────────────────────────────────────
+  let searchTimer;
+  $("search").addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(renderQueue, 120);
+  });
+  ["filterStatus", "filterType", "filterAssignee"].forEach(id =>
+    $(id).addEventListener("change", renderQueue));
+
+  async function refreshReview() {
+    if (!isReviewer()) return;
+    try {
+      reviewers = await fetchReviewers();
+      await refreshData();
+      if (!channel) subscribe();
+    } catch (ex) {
+      toast(errMsg(ex));
+    }
+  }
+
+  async function refreshData() {
+    try {
+      submissions = await fetchSubmissions();
+      renderStats();
+      renderQueue();
+      if (!isEditingDetail()) renderDetail();
+    } catch (ex) {
+      toast(errMsg(ex));
+    }
+  }
+
+  // Don't rebuild the detail panel while a reviewer is typing in it
+  function isEditingDetail() {
+    const a = document.activeElement;
+    return !!a && $("detail").contains(a) && ["INPUT", "TEXTAREA", "SELECT"].includes(a.tagName);
+  }
+
+  function renderStats() {
+    const c = { total: submissions.length, pending: 0, progress: 0, approved: 0 };
+    submissions.forEach(s => {
+      if (s.status === "pending") c.pending++;
+      else if (s.status === "under_review" || s.status === "changes_requested") c.progress++;
+      else if (s.status === "approved") c.approved++;
+    });
+    $("stTotal").textContent = c.total;
+    $("stPending").textContent = c.pending;
+    $("stProgress").textContent = c.progress;
+    $("stApproved").textContent = c.approved;
+  }
+
+  function renderQueue() {
+    if (selectedRef && !submissions.some(x => x.ref === selectedRef)) selectedRef = null;
+
+    const q = $("search").value.trim().toLowerCase();
+    const fs = $("filterStatus").value;
+    const ft = $("filterType").value;
+    const fa = $("filterAssignee").value;
+    const me = user ? user.id : null;
+
+    const rows = submissions.filter(s => {
+      if (fs !== "all" && s.status !== fs) return false;
+      if (ft !== "all" && s.type !== ft) return false;
+      if (fa === "me" && s.assignee !== me) return false;
+      if (fa === "unassigned" && s.assignee) return false;
+      if (q && ![s.title, s.name, s.email, s.ref].some(v => String(v || "").toLowerCase().includes(q))) return false;
+      return true;
+    });
+
+    const body = $("queueBody");
+    if (!rows.length) {
+      body.innerHTML = `
+        <tr class="empty-row"><td colspan="3"><div class="empty">
+          <strong>No submissions found</strong>
+          ${submissions.length ? "Try adjusting the filters." : "New submissions will appear here."}
+        </div></td></tr>`;
+      return;
+    }
+
+    body.innerHTML = rows.map(s => `
+      <tr class="row ${s.ref === selectedRef ? "sel" : ""}" data-ref="${esc(s.ref)}" tabindex="0"
+          role="button" aria-pressed="${s.ref === selectedRef}">
+        <td>
+          <div class="title">${esc(s.title)}${s.assignee ? ` <span class="note-tag internal">assigned</span>` : ""}</div>
+          <div class="meta"><span class="mono">${esc(s.ref)}</span> · ${esc(s.name)} · v${esc(s.version)}</div>
+        </td>
+        <td><span class="type-tag">${esc(s.type)}</span></td>
+        <td>${pill(s.status)}</td>
+      </tr>`).join("");
+
+    body.querySelectorAll("tr[data-ref]").forEach(tr => {
+      const pick = () => { selectedRef = tr.dataset.ref; renderQueue(); renderDetail(); };
+      tr.addEventListener("click", pick);
+      tr.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); }
+      });
+    });
+  }
+
+  // ── Detail ──────────────────────────────────────────────────
+  function renderDetail() {
+    const token = ++detailToken;
+    const panel = $("detail");
+    const s = currentSubmission();
+
+    if (!s) {
+      panel.innerHTML = `<div class="empty"><strong>No submission selected</strong>Choose an item from the queue to review it.</div>`;
+      return;
+    }
+
+    const locked = s.status === "approved" || s.status === "rejected";
+    const assignee = s.assignee ? reviewers.find(r => r.id === s.assignee) : null;
+    const notes = (s.notes || []).slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const history = (s.history || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const versions = (s.versions || []).slice().sort((a, b) => b.version - a.version);
+    const hasPreview = (s.type === "picture" || s.type === "video") && s.file_path;
+    const reviewerOptions = reviewers.map(r =>
+      `<option value="${esc(r.id)}" ${s.assignee === r.id ? "selected" : ""}>${esc(r.name)}</option>`).join("");
+
+    panel.innerHTML = `
+      <div class="detail-head">
+        <div>
+          <h2>${esc(s.title)}</h2>
+          <div class="status-line">
+            ${pill(s.status)}
+            <span class="type-tag">${esc(s.type)}</span>
+            <span class="version-badge">v${esc(s.version)}</span>
+            <span class="mono">${esc(s.ref)}</span>
+          </div>
+        </div>
+        <button type="button" class="btn ghost sm" data-copy="${esc(s.ref)}">Copy ref</button>
+      </div>
+
+      <div class="submitter">
+        <div class="avatar" aria-hidden="true">${esc(initials(s.name))}</div>
+        <div>
+          <div class="who">${esc(s.name)}</div>
+          <div class="email">${esc(s.email)} · to ${esc(s.destination)}</div>
+        </div>
+      </div>
+
+      <div class="section-label">Assignment</div>
+      ${assignee
+        ? `<div class="status-line" style="margin-bottom:8px"><span class="pill under_review">Assigned to ${esc(assignee.name)}</span></div>`
+        : `<p class="hint" style="margin:0 0 8px">Unassigned</p>`}
+      <div class="assign-row">
+        <label class="sr-only" for="assignSelect">Assign to reviewer</label>
+        <select class="select" id="assignSelect" ${locked ? "disabled" : ""}>
+          <option value="">Unassigned</option>
+          ${reviewerOptions}
+        </select>
+        <button type="button" class="btn ghost sm" data-act="assign-me"
+          ${locked || (user && s.assignee === user.id) ? "disabled" : ""}>Assign to me</button>
+      </div>
+
+      ${s.description ? `<p class="desc" style="margin-top:16px">${esc(s.description)}</p>` : ""}
+      ${s.type === "article" && s.body ? `<div class="section-label">Article</div><div class="body-box">${esc(s.body)}</div>` : ""}
+
+      ${s.file_name ? `
+        <div class="section-label">Attachment</div>
+        <div class="attach">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+          <span class="name">${esc(s.file_name)}</span>
+          <span class="meta">${bytes(s.file_size)}</span>
+          ${s.file_path ? `<button type="button" class="btn ghost sm" data-open="${esc(s.file_path)}">Open</button>` : ""}
+        </div>
+        ${hasPreview ? `<div id="previewSlot"><p class="hint">Loading preview…</p></div>` : ""}` : ""}
+
+      ${versions.length > 1 ? `
+        <div class="section-label">Versions</div>
+        <ul class="note-list">
+          ${versions.map(v => `<li><div class="note-meta"><span>v${esc(v.version)} · ${esc(v.file_name || "no file")}</span><span>${fmt(v.created_at)}</span></div></li>`).join("")}
+        </ul>` : ""}
+
+      <div class="section-label">Decision</div>
+      <div class="decision-bar">
+        <button type="button" class="btn ghost" data-act="start" ${s.status !== "pending" ? "disabled" : ""}>Start review</button>
+        <button type="button" class="btn warn" data-act="changes" ${locked ? "disabled" : ""}>Request changes</button>
+        <button type="button" class="btn danger" data-act="reject" ${locked ? "disabled" : ""}>Reject</button>
+        <button type="button" class="btn ok" data-act="approve" ${locked ? "disabled" : ""}>Approve &amp; deliver</button>
+      </div>
+      <p class="hint">Requesting changes and rejecting send your note to the submitter. Add a note first.</p>
+
+      <div class="section-label">Add a note</div>
+      <div class="note-row">
+        <label class="sr-only" for="noteInput">Note text</label>
+        <input class="input" id="noteInput" placeholder="Note text…" maxlength="2000" ${locked ? "disabled" : ""}>
+        <label class="sr-only" for="noteVis">Note visibility</label>
+        <select class="select vis-select" id="noteVis" ${locked ? "disabled" : ""}>
+          <option value="internal">Internal only</option>
+          <option value="submitter">Visible to submitter</option>
+        </select>
+        <button type="button" class="btn ghost" data-act="note" ${locked ? "disabled" : ""}>Add note</button>
+      </div>
+
+      <div class="section-label">Notes</div>
+      ${notes.length ? `<ul class="note-list">${notes.map(n => `
+        <li>
+          <div class="note-meta">
+            <span>${esc(n.author_name)} · <span class="note-tag ${esc(n.visibility)}">${n.visibility === "submitter" ? "to submitter" : "internal"}</span></span>
+            <span>${fmt(n.created_at)}</span>
+          </div>
+          ${esc(n.text)}
+        </li>`).join("")}</ul>` : `<p class="hint">No notes yet.</p>`}
+
+      <div class="section-label">History</div>
+      <ul class="timeline">${history.map(h => `<li>${esc(h.text)}<time>${fmt(h.created_at)} · ${esc(h.by_name)}</time></li>`).join("")
+        || `<li>No activity yet.</li>`}</ul>
+
+      ${isAdmin() ? `
+        <div class="inline-actions" style="margin-top:20px">
+          <button type="button" class="btn ghost sm" data-act="delete">Delete submission</button>
+        </div>` : ""}`;
+
+    panel.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", () => copyText(b.dataset.copy)));
+    panel.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => onAction(b.dataset.act, b)));
+    panel.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => openFile(b.dataset.open)));
+
+    const assignSelect = $("assignSelect");
+    if (assignSelect) assignSelect.addEventListener("change", () => assign(s, assignSelect.value || null));
+
+    if (hasPreview) loadPreview(s, token);
+  }
+
+  async function loadPreview(s, token) {
+    try {
+      const url = await signedUrl(s.file_path);
+      if (token !== detailToken) return;
+      const slot = $("previewSlot");
+      if (!slot) return;
+      slot.innerHTML = s.type === "picture"
+        ? `<img class="preview" src="${esc(url)}" alt="Preview of ${esc(s.file_name)}">`
+        : `<video class="preview" controls preload="metadata" src="${esc(url)}"></video>`;
+    } catch (ex) {
+      if (token === detailToken && $("previewSlot")) {
+        $("previewSlot").innerHTML = `<p class="hint">Preview unavailable.</p>`;
+      }
+    }
+  }
+
+  async function openFile(path) {
+    const w = window.open("", "_blank");
+    if (w) w.opener = null;
+    try {
+      const url = await signedUrl(path);
+      if (w) w.location = url; else toast("Allow pop-ups to open files");
+    } catch (ex) {
+      if (w) w.close();
+      toast(errMsg(ex));
+    }
+  }
+
+  // ── Actions ─────────────────────────────────────────────────
+  async function assign(s, assigneeId) {
+    try {
+      const { error } = await sb.rpc("assign_submission", { p_id: s.id, p_assignee: assigneeId });
+      if (error) throw error;
+      toast(assigneeId ? "Assigned" : "Unassigned");
+      await refreshData();
+    } catch (ex) {
+      toast(errMsg(ex));
+      renderDetail();
+    }
+  }
+
+  async function onAction(action, btn) {
+    if (busy) return;
+    const s = currentSubmission();
+    if (!s) return;
+    if (!isReviewer()) { toast("Please sign in again"); showView("review"); return; }
+
+    if (action === "assign-me") return assign(s, user.id);
+    if (action === "delete") return deleteSubmission(s);
+
+    const noteEl = $("noteInput");
+    const visEl = $("noteVis");
+    const note = noteEl ? noteEl.value.trim() : "";
+    const visibility = visEl ? visEl.value : "internal";
+
+    if (action === "note" && !note) { toast("Write a note first"); if (noteEl) noteEl.focus(); return; }
+    if ((action === "changes" || action === "reject") && !note) {
+      toast(action === "reject" ? "Add a reason for rejection" : "Add a note explaining what to change");
+      if (noteEl) noteEl.focus();
+      return;
+    }
+    if (action === "reject" && !confirm("Reject this submission? The submitter will be notified.")) return;
+
+    busy = true;
+    try {
+      await withButton(btn, null, async () => {
+        const { error } = await sb.rpc("review_action", {
+          p_id: s.id, p_action: action, p_note: note || null, p_visibility: visibility
+        });
+        if (error) throw error;
+      });
+      const done = {
+        start: "Review started", changes: "Changes requested", reject: "Rejected",
+        approve: "Approved and delivered (simulated)", note: "Note added"
+      }[action];
+      toast(done);
+      await refreshData();
+    } catch (ex) {
+      toast(errMsg(ex));
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function deleteSubmission(s) {
+    if (!isAdmin()) { toast("Admins only"); return; }
+    if (!confirm(`Delete ${s.ref} permanently? Its files will be removed too.`)) return;
+    busy = true;
+    try {
+      const paths = [...new Set([s.file_path, ...(s.versions || []).map(v => v.file_path)].filter(Boolean))];
+      if (paths.length) {
+        const { error: rmErr } = await sb.storage.from(BUCKET).remove(paths);
+        if (rmErr) throw rmErr;
+      }
+      const { error } = await sb.rpc("delete_submission", { p_id: s.id });
+      if (error) throw error;
+      selectedRef = null;
+      toast("Submission deleted");
+      await refreshData();
+    } catch (ex) {
+      toast(errMsg(ex));
+    } finally {
+      busy = false;
+    }
+  }
+
+  // ── Realtime ────────────────────────────────────────────────
+  let liveTimer;
+  function subscribe() {
+    unsubscribe();
+    if (!isReviewer()) return;
+    const schedule = () => { clearTimeout(liveTimer); liveTimer = setTimeout(refreshData, 300); };
+    channel = sb.channel("content-desk-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "submissions" }, schedule)
+      .on("postgres_changes", { event: "*", schema: "public", table: "submission_notes" }, schedule)
+      .on("postgres_changes", { event: "*", schema: "public", table: "submission_history" }, schedule)
+      .subscribe();
+  }
+
+  function unsubscribe() {
+    if (channel) { sb.removeChannel(channel); channel = null; }
+  }
+
+  // ── Manage team (admins) ────────────────────────────────────
+  async function refreshManage() {
+    const allowed = isAdmin();
+    $("noPermCard").classList.toggle("hidden", allowed);
+    $("manageWrap").classList.toggle("hidden", !allowed);
+    if (!allowed) return;
+    try {
+      reviewers = await fetchReviewers();
+      renderReviewers();
+    } catch (ex) {
+      toast(errMsg(ex));
+    }
+  }
+
+  function renderReviewers() {
+    const list = $("reviewerList");
+    const adminCount = reviewers.filter(r => r.role === "admin").length;
+    list.innerHTML = reviewers.map(r => {
+      const isMe = user && r.id === user.id;
+      const isLastAdmin = r.role === "admin" && adminCount === 1;
+      return `<li>
+        <div class="avatar" aria-hidden="true">${esc(initials(r.name))}</div>
+        <div class="info">
+          <strong>${esc(r.name)}${isMe ? " (you)" : ""}</strong>
+          <small>${esc(r.email)}</small>
+        </div>
+        <span class="role-tag ${esc(r.role)}">${esc(r.role)}</span>
+        ${!isMe && !isLastAdmin ? `<button type="button" class="btn ghost sm" data-remove="${esc(r.id)}">Remove</button>` : ""}
+      </li>`;
+    }).join("") || `<li><div class="info">No reviewers yet.</div></li>`;
+
+    list.querySelectorAll("[data-remove]").forEach(b =>
+      b.addEventListener("click", () => removeReviewer(b.dataset.remove)));
+  }
+
+  async function removeReviewer(id) {
+    const r = reviewers.find(x => x.id === id);
+    if (!r) return;
+    if (!confirm(`Remove ${r.name} (${r.email})? They will lose access immediately.`)) return;
+    try {
+      const { data, error } = await sb.functions.invoke("remove-reviewer", { body: { profile_id: id } });
+      if (error) throw new Error(await functionError(error));
+      if (data && data.error) throw new Error(data.error);
+      toast("Reviewer removed");
+      await refreshManage();
+    } catch (ex) {
+      toast(errMsg(ex));
+    }
+  }
+
+  $("addReviewerForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!isAdmin() || busy) return;
+    const err = $("addReviewerError");
+    err.textContent = "";
+    const name = $("newRevName").value.trim();
+    const email = $("newRevEmail").value.trim().toLowerCase();
+    const password = $("newRevPass").value;
+    const role = $("newRevRole").value === "admin" ? "admin" : "reviewer";
+
+    if (!name) { err.textContent = "Enter a name."; $("newRevName").focus(); return; }
+    if (!EMAIL_RE.test(email)) { err.textContent = "Enter a valid email."; $("newRevEmail").focus(); return; }
+    if (password.length < 8) { err.textContent = "Password must be at least 8 characters."; $("newRevPass").focus(); return; }
+
+    busy = true;
+    try {
+      await withButton(e.target.querySelector('button[type="submit"]'), "Adding…", async () => {
+        const { data, error } = await sb.functions.invoke("add-reviewer", {
+          body: { name, email, password, role }
+        });
+        if (error) throw new Error(await functionError(error));
+        if (data && data.error) throw new Error(data.error);
+        e.target.reset();
+        toast(`Added ${name} as ${role}`);
+      });
+      await refreshManage();
+    } catch (ex) {
+      err.textContent = errMsg(ex);
+    } finally {
+      busy = false;
+    }
+  });
+
+  // ── Keyboard shortcuts (review page only) ───────────────────
+  document.addEventListener("keydown", e => {
+    if ($("view-review").classList.contains("hidden")) return;
+    const el = e.target;
+    const typing = el.matches && el.matches("input, textarea, select");
+
+    if (!typing && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      if (e.key === "j") { e.preventDefault(); moveSelection(1); return; }
+      if (e.key === "k") { e.preventDefault(); moveSelection(-1); return; }
+      if (e.key === "/") { e.preventDefault(); $("search").focus(); return; }
+      if (e.key === "Escape") { selectedRef = null; renderQueue(); renderDetail(); return; }
+    }
+
+    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      // e.code is used so shortcuts work regardless of keyboard layout or Option-key characters
+      const actions = { KeyA: "approve", KeyR: "reject", KeyC: "changes", KeyS: "start" };
+      if (actions[e.code]) {
+        e.preventDefault();
+        const btn = document.querySelector(`#detail [data-act="${actions[e.code]}"]`);
+        if (btn && !btn.disabled) btn.click();
+        return;
+      }
+      if (e.code === "KeyN") {
+        e.preventDefault();
+        const n = $("noteInput");
+        if (n && !n.disabled) n.focus();
+      }
+    }
+  });
+
+  function moveSelection(dir) {
+    const visible = [...document.querySelectorAll("#queueBody tr[data-ref]")].map(r => r.dataset.ref);
+    if (!visible.length) return;
+    const idx = visible.indexOf(selectedRef);
+    const next = idx === -1 ? (dir > 0 ? 0 : visible.length - 1) : (idx + dir + visible.length) % visible.length;
+    selectedRef = visible[next];
+    renderQueue();
+    renderDetail();
+    const row = document.querySelector(`#queueBody tr[data-ref="${CSS.escape(selectedRef)}"]`);
+    if (row) row.scrollIntoView({ block: "nearest" });
+  }
+
+  // ── Init ────────────────────────────────────────────────────
+  (async () => {
+    syncTypeFields();
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) await loadProfile(session);
+    } catch (ex) {
+      console.error(ex);
+    }
+    updateNav();
+    showView("submit");
+  })();
+})();
+</script>
+</body>
+</html>
