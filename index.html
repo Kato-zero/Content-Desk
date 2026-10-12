@@ -3,759 +3,294 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <title>Content Desk</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
   :root {
-    --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f9fafc;
-    --text: #0f172a; --text-2: #475569; --muted: #94a3b8; --line: #e5e9f0;
-    --brand: #4f46e5; --brand-600: #4338ca; --brand-soft: #eef2ff;
-    --ok: #059669; --ok-soft: #ecfdf5; --ok-line: #a7f3d0;
-    --warn: #d97706; --warn-soft: #fffbeb;
-    --bad: #dc2626; --bad-soft: #fef2f2;
-    --info: #475569; --info-soft: #f1f5f9;
-    --radius: 14px;
-    --shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
-    --shadow-lg: 0 10px 30px -12px rgba(15,23,42,.18);
-    --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+    --surface: #ffffff; --surface-2: #f2f2f7;
+    --text: #000000; --text-2: #3c3c43; --muted: #8e8e93; --line: #e5e5ea;
+    --brand: #007aff; --brand-600: #0062cc; --brand-soft: #e5f0ff;
+    --ok: #34c759; --ok-soft: #e8f8ed;
+    --warn: #ff9500; --warn-soft: #fff3e0;
+    --bad: #ff3b30; --bad-soft: #ffe9e7;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0b1020; --surface: #121a2e; --surface-2: #17213a;
-      --text: #e6ebf5; --text-2: #aab4c8; --muted: #6f7b94; --line: #22304d;
-      --brand: #818cf8; --brand-600: #6366f1; --brand-soft: #1e2750;
-      --ok-soft: #0d2a22; --ok-line: #14532d;
-      --warn-soft: #2d2410; --bad-soft: #2d1616; --info-soft: #1a2336;
-      --shadow: 0 1px 2px rgba(0,0,0,.4); --shadow-lg: 0 10px 30px -12px rgba(0,0,0,.6);
-    }
-  }
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-  html, body { height: 100%; }
-  body {
-    margin: 0; font-family: var(--font); font-size: clamp(14px, 0.9vw + 11px, 15px); line-height: 1.5;
-    background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+  html, body {
+    margin: 0; background: #fff; color: var(--text);
+    font-family: var(--font); font-size: 17px; line-height: 1.4;
+    overflow-x: hidden; max-width: 100%;
+    -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
+    padding-top: env(safe-area-inset-top);
   }
   button, input, select, textarea { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
   .sr-only {
-    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
   .hidden { display: none !important; }
   .view { animation: fade .2s ease; }
-  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+  /* Tab bar */
+  aside {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    display: flex; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, .86); border-top: .5px solid #c6c6c8;
+    backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+  .brand, .nav-label, .sidebar-foot { display: none; }
+  .nav-wrap { flex: 1; display: flex; min-width: 0; }
+  nav { display: flex; width: 100%; justify-content: space-around; }
+  .nav-btn {
+    flex: 1; min-width: 0; min-height: 50px; padding: 4px 2px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: 0; color: var(--muted);
+    font-size: 10px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+  }
+  .nav-btn svg { width: 25px; height: 25px; stroke-width: 1.8; }
+  .nav-btn.active { color: var(--brand); }
+  .nav-btn:active { opacity: .5; }
 
   /* Layout */
-  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100%; }
-  aside {
-    background: var(--surface); border-right: 1px solid var(--line);
-    padding: 22px 16px; display: flex; flex-direction: column; gap: 24px;
-    position: sticky; top: 0; height: 100vh; min-width: 0;
+  .app { display: block; }
+  main {
+    width: 100%; max-width: 480px; margin: 0 auto; min-width: 0;
+    padding: 8px 16px calc(120px + env(safe-area-inset-bottom));
   }
-  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
-  .logo {
-    width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none;
-    background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; box-shadow: var(--shadow);
-  }
-  .brand strong { font-size: 15px; letter-spacing: -.01em; }
-  .brand small { display: block; color: var(--muted); font-size: 12px; }
-  .nav-wrap { display: flex; flex-direction: column; gap: 4px; }
-  nav { display: flex; flex-direction: column; gap: 4px; }
-  .nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 0 10px; margin-bottom: 6px; }
-  .nav-btn {
-    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px;
-    background: none; border: 0; padding: 9px 10px; border-radius: 10px;
-    color: var(--text-2); cursor: pointer; text-align: left; font-weight: 500;
-  }
-  .nav-btn svg { width: 18px; height: 18px; flex: none; }
-  .nav-btn:hover { background: var(--surface-2); color: var(--text); }
-  .nav-btn.active { background: var(--brand-soft); color: var(--brand); }
-  .sidebar-foot { margin-top: auto; font-size: 12px; color: var(--muted); padding: 0 8px; }
-
-  main { padding: 28px 32px 60px; min-width: 0; width: 100%; max-width: 1320px; margin: 0 auto; }
-  .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: clamp(16px, 2vw, 24px); }
-  .page-head h1 { font-size: clamp(20px, 1.2vw + 16px, 26px); letter-spacing: -.02em; margin: 0 0 4px; }
-  .page-head p { margin: 0; color: var(--text-2); }
-  .grid-2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; }
-  .grid-2 > * { min-width: 0; }
+  .page-head { padding-top: 12px; margin-bottom: 20px; }
+  .page-head h1 { font-size: 34px; font-weight: 700; letter-spacing: .37px; line-height: 1.1; margin: 0 0 4px; overflow-wrap: anywhere; }
+  .page-head p { margin: 0; font-size: 15px; color: var(--muted); }
 
   /* Cards and stats */
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(16px, 1.4vw, 24px); box-shadow: var(--shadow); min-width: 0; }
-  .card + .card { margin-top: 20px; }
-  .card-title { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
-  .card-sub { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); min-width: 0; }
-  .stat span { color: var(--text-2); font-size: 12px; font-weight: 500; }
-  .stat strong { display: block; font-size: clamp(20px, 1.4vw + 14px, 28px); letter-spacing: -.02em; margin-top: 4px; }
-  .session-bar {
-    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
-    padding: 10px 14px; margin-bottom: 16px; color: var(--text-2); font-size: 13px;
+  .card {
+    background: #fff; border: .5px solid var(--line); border-radius: 14px;
+    padding: 16px; margin-bottom: 16px; min-width: 0; overflow: hidden;
   }
-  .session-bar strong { color: var(--text); }
+  .card-title { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
+  .card-sub { font-size: 15px; color: var(--muted); margin: 0 0 14px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat { border: .5px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+  .stat span { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .stat strong { display: block; font-size: 26px; font-weight: 700; letter-spacing: .37px; }
+  .session-bar {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 2px 0 12px; margin-bottom: 14px; border-bottom: .5px solid var(--line);
+    font-size: 15px; color: var(--muted); min-width: 0;
+  }
+  .session-bar span { min-width: 0; overflow-wrap: anywhere; }
+  .session-bar strong { color: #000; }
+  .center { text-align: center; }
 
   /* Forms */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .full { grid-column: 1 / -1; }
-  .field-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+  .form-stack { display: grid; gap: 14px; margin-top: 18px; min-width: 0; }
+  .field-label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin: 0 0 6px; }
   .input, .select, .textarea {
-    width: 100%; background: var(--surface-2); border: 1px solid var(--line);
-    border-radius: 10px; padding: 10px 12px; outline: none; min-height: 44px;
-    transition: border-color .15s, box-shadow .15s, background .15s;
+    display: block; width: 100%; min-width: 0; min-height: 44px;
+    padding: 11px 12px; border: 0; border-radius: 10px;
+    background: var(--surface-2); font-size: 17px; outline: none;
   }
   .textarea { min-height: 96px; resize: vertical; }
-  .input:focus, .select:focus, .textarea:focus { border-color: var(--brand); background: var(--surface); box-shadow: 0 0 0 4px var(--brand-soft); }
-  .hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
-  .error { color: var(--bad); font-size: 13px; margin: 10px 0 0; min-height: 0; }
+  .input:focus, .select:focus, .textarea:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, .35); }
+  .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; overflow-wrap: anywhere; }
+  .error { font-size: 15px; color: var(--bad); margin: 10px 0 0; overflow-wrap: anywhere; }
   .error:empty { display: none; }
 
-  .type-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .type-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .type-opt { position: relative; min-width: 0; }
   .type-opt input { position: absolute; opacity: 0; pointer-events: none; }
   .type-opt label {
-    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; min-height: 44px; height: 100%;
-    border: 1px solid var(--line); border-radius: 12px; cursor: pointer; background: var(--surface);
-    font-size: 12.5px; font-weight: 600; color: var(--text-2); transition: all .15s; text-align: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    min-height: 72px; padding: 10px 4px; border-radius: 14px; background: var(--surface-2);
+    font-size: 13px; font-weight: 500; color: var(--text-2); text-align: center; cursor: pointer;
   }
   .type-opt label svg { width: 22px; height: 22px; }
-  .type-opt label:hover { border-color: var(--brand); color: var(--text); }
-  .type-opt input:checked + label { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+  .type-opt input:checked + label { background: var(--brand-soft); color: var(--brand); box-shadow: inset 0 0 0 2px var(--brand); }
   .type-opt input:focus-visible + label { outline: 2px solid var(--brand); outline-offset: 2px; }
 
+  /* Files: fixed-size drop area and list, so choosing files doesn't jump the page */
   .dropzone {
-    display: block; border: 1.5px dashed var(--line); border-radius: 12px; padding: 22px; text-align: center;
-    background: var(--surface-2); cursor: pointer; transition: all .15s;
+    min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    padding: 18px; text-align: center; cursor: pointer;
+    border: 1px dashed #c7c7cc; border-radius: 14px; background: var(--surface-2);
   }
-  .dropzone:hover, .dropzone:focus-visible, .dropzone.drag { border-color: var(--brand); background: var(--brand-soft); }
-  .dropzone.drag { border-style: solid; }
-  .dropzone strong { display: block; font-size: 14px; }
-  .dropzone span { color: var(--muted); font-size: 12.5px; }
-  .file-chip { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-  .file-chip.show { display: flex; }
-  .file-chip .name { flex: 1 1 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
-  .file-chip .size { color: var(--muted); font-size: 12px; }
+  .dropzone:hover, .dropzone:focus-visible, .dropzone.drag { background: var(--brand-soft); border-color: var(--brand); }
+  .dropzone strong { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+  .dropzone span { font-size: 13px; color: var(--muted); }
+  .file-list { display: grid; gap: 8px; margin-top: 10px; min-height: 56px; min-width: 0; }
+  .file-row {
+    display: flex; align-items: center; gap: 10px; min-width: 0;
+    padding: 10px 12px; border-radius: 12px; background: var(--surface-2);
+  }
+  .file-row .name { flex: 1; min-width: 0; font-weight: 500; overflow-wrap: anywhere; word-break: break-all; }
+  .file-row .size { flex: none; font-size: 13px; color: var(--muted); }
+  .file-row .btn { flex: none; }
+  .file-row.empty .name { color: var(--muted); font-weight: 400; }
 
   /* Buttons */
   .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px;
-    border: 1px solid transparent; background: var(--brand); color: #fff;
-    padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer;
-    transition: background .15s, transform .05s, opacity .15s; white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 44px; padding: 10px 18px; border: 0; border-radius: 12px;
+    background: var(--brand); color: #fff; font-size: 17px; font-weight: 600;
+    cursor: pointer; text-align: center;
   }
   .btn:hover { background: var(--brand-600); }
-  .btn:active { transform: translateY(1px); }
-  .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
-  .btn.ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
-  .btn.ghost:hover { background: var(--surface-2); }
-  .btn.ok { background: var(--ok); } .btn.ok:hover { background: #047857; }
-  .btn.warn { background: var(--warn); } .btn.warn:hover { background: #b45309; }
-  .btn.danger { background: var(--bad); } .btn.danger:hover { background: #b91c1c; }
-  .btn.sm { padding: 7px 12px; font-size: 13px; min-height: 36px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
-  .inline-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+  .btn:active { opacity: .6; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.ghost { background: var(--brand-soft); color: var(--brand); }
+  .btn.ghost:hover { background: #d3e6ff; }
+  .btn.ok { background: var(--ok); }
+  .btn.warn { background: var(--warn); }
+  .btn.danger { background: var(--bad); }
+  .btn.sm { min-height: 34px; padding: 6px 12px; font-size: 15px; border-radius: 10px; }
+  .btn.block { width: 100%; }
+  .actions { display: grid; gap: 10px; margin-top: 18px; }
+  .inline-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
   /* Badges */
-  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--info-soft); color: var(--info); white-space: nowrap; }
-  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .pill.under_review, .pill.changes_requested { background: var(--warn-soft); color: var(--warn); }
-  .pill.approved { background: var(--ok-soft); color: var(--ok); }
-  .pill.rejected { background: var(--bad-soft); color: var(--bad); }
-  .type-tag { font-size: 12px; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px; text-transform: capitalize; }
-  .version-badge { font-size: 11px; background: var(--surface-2); border: 1px solid var(--line); padding: 2px 6px; border-radius: 4px; color: var(--text-2); font-family: var(--mono); }
-  .mono { font-family: var(--mono); font-size: 12.5px; color: var(--text-2); }
-  .role-tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); font-weight: 700; text-transform: capitalize; }
-  .role-tag.reviewer { background: var(--info-soft); color: var(--info); }
-  .note-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
-  .note-tag.internal { background: var(--info-soft); color: var(--info); }
-  .note-tag.submitter { background: var(--ok-soft); color: var(--ok); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 13px; font-weight: 500; background: #f2f2f7; color: #636366; white-space: nowrap; }
+  .pill.under_review, .pill.changes_requested { background: #fff3e0; color: #c77700; }
+  .pill.approved { background: var(--ok-soft); color: #248a3d; }
+  .pill.rejected { background: var(--bad-soft); color: #d70015; }
+  .type-tag, .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; background: var(--surface-2); font-size: 13px; color: var(--text-2); }
+  .version-badge { display: inline-block; padding: 2px 6px; border-radius: 6px; background: var(--surface-2); font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+  .mono { font-family: var(--mono); font-size: 13px; color: var(--text-2); overflow-wrap: anywhere; word-break: break-all; }
+  .role-tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); }
+  .role-tag.reviewer { background: var(--surface-2); color: var(--text-2); }
+  .note-tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; background: #f2f2f7; color: #636366; }
+  .note-tag.submitter { background: var(--ok-soft); color: #248a3d; }
+  .status-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
 
-  /* Queue */
-  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-  .toolbar .search { flex: 1 1 200px; }
-  .toolbar .select { width: auto; min-width: 140px; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; }
-  th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-  td { padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-  tbody tr.row { cursor: pointer; transition: background .12s; }
-  tbody tr.row:hover { background: var(--surface-2); }
-  tbody tr.row:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
-  tbody tr.sel { background: var(--brand-soft); }
-  .title { font-weight: 600; overflow-wrap: anywhere; }
-  .meta { color: var(--muted); font-size: 12px; }
-  .empty { text-align: center; padding: 40px 16px; color: var(--muted); }
-  .empty strong { display: block; color: var(--text-2); margin-bottom: 4px; font-size: 14px; }
-  .kbd-hint { font-size: 11.5px; color: var(--muted); margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; }
-  .kbd { display: inline-block; background: var(--surface-2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+  /* Queue (rows on phones) */
+  .toolbar { display: grid; gap: 8px; margin-bottom: 12px; }
+  .toolbar .select { width: 100%; }
+  table, tbody { display: block; width: 100%; }
+  thead { display: none; }
+  tbody tr.row, tbody tr.empty-row {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center;
+    padding: 12px 4px; border-bottom: .5px solid var(--line); min-width: 0; cursor: pointer;
+  }
+  tbody tr.empty-row { display: block; cursor: default; }
+  tbody tr.row.sel { background: var(--brand-soft); border-radius: 10px; border-bottom-color: transparent; }
+  tbody tr.row td { display: contents; }
+  tbody tr.row td:first-child { grid-column: 1 / -1; min-width: 0; }
+  tbody tr.row td:nth-child(3) { justify-self: end; }
+  .title { font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+  .meta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .empty { text-align: center; padding: 32px 12px; color: var(--muted); }
+  .empty strong { display: block; color: #000; font-size: 17px; margin-bottom: 4px; }
 
   /* Detail */
-  .detail-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
-  .detail-head h2 { font-size: 18px; letter-spacing: -.01em; margin: 0 0 6px; overflow-wrap: anywhere; }
-  .status-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .submitter { display: flex; align-items: center; gap: 10px; margin: 16px 0; padding: 12px; background: var(--surface-2); border-radius: 12px; border: 1px solid var(--line); }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-weight: 700; flex: none; font-size: 13px; }
-  .who { font-weight: 600; }
-  .email { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
-  .desc { color: var(--text-2); margin: 0 0 14px; overflow-wrap: anywhere; }
-  .body-box { white-space: pre-wrap; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; max-height: 240px; overflow: auto; overflow-wrap: anywhere; }
-  .attach { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
-  .attach .name { font-weight: 600; flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; }
-  .preview { display: block; max-width: 100%; border-radius: 12px; border: 1px solid var(--line); margin-top: 12px; }
-  .section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 10px; }
-  .decision-bar { display: flex; flex-wrap: wrap; gap: 8px; }
-  .decision-bar .btn { flex: 1 1 auto; }
-  .assign-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .assign-row .select { flex: 1 1 200px; width: auto; }
-  .note-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-  .note-row .input { flex: 1 1 180px; min-width: 0; }
-  .note-row .vis-select { flex: 0 0 auto; width: auto; min-width: 150px; }
+  .detail-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px; min-width: 0; }
+  .detail-head > div { flex: 1 1 200px; min-width: 0; }
+  .detail-head h2 { font-size: 22px; font-weight: 700; letter-spacing: .2px; margin: 0 0 6px; overflow-wrap: anywhere; }
+  .submitter { display: flex; align-items: center; gap: 10px; margin: 14px 0; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); min-width: 0; }
+  .submitter > div { min-width: 0; flex: 1; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex: none; }
+  .who { font-weight: 600; overflow-wrap: anywhere; }
+  .email { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+  .desc { margin: 12px 0 0; color: var(--text-2); overflow-wrap: anywhere; }
+  .section-label { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); margin: 22px 0 8px 4px; }
+  .body-box {
+    white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
+    background: var(--surface-2); border-radius: 12px; padding: 14px;
+    max-height: 40vh; overflow-x: hidden; overflow-y: auto;
+  }
+  .attach {
+    display: flex; align-items: center; gap: 10px; min-width: 0;
+    margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--surface-2);
+  }
+  .attach .name { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; word-break: break-all; }
+  .attach .meta { flex: none; }
+  .attach .btn { flex: none; }
+  .preview-box {
+    display: grid; place-items: center; overflow: hidden;
+    width: 100%; max-width: 100%; aspect-ratio: 4 / 3; max-height: 55vh;
+    margin-top: 10px; border-radius: 12px; background: var(--surface-2);
+  }
+  .preview-box img, .preview-box video { width: 100%; height: 100%; object-fit: contain; border-radius: 12px; display: block; }
+  .preview-box .hint { margin: 0; }
+  .decision { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .decision .btn { width: 100%; }
+  .decision .wide { grid-column: 1 / -1; }
+  .assign-row { display: grid; gap: 8px; }
+  .note-row { display: grid; gap: 8px; }
   .note-list { list-style: none; margin: 0; padding: 0; }
-  .note-list li { padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; font-size: 13px; overflow-wrap: anywhere; }
-  .note-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11.5px; margin-bottom: 4px; flex-wrap: wrap; }
-  .timeline { list-style: none; margin: 0; padding: 0; position: relative; }
-  .timeline li { position: relative; padding: 0 0 16px 22px; font-size: 13.5px; overflow-wrap: anywhere; }
-  .timeline li::before { content: ""; position: absolute; left: 4px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
-  .timeline li::after { content: ""; position: absolute; left: 7.5px; top: 18px; bottom: 0; width: 1px; background: var(--line); }
+  .note-list li {
+    margin-bottom: 8px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2);
+    font-size: 15px; overflow-wrap: anywhere; word-break: break-word;
+  }
+  .note-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 4px; font-size: 12px; color: var(--muted); }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { position: relative; padding: 0 0 16px 22px; font-size: 15px; overflow-wrap: anywhere; }
+  .timeline li::before { content: ""; position: absolute; left: 4px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+  .timeline li::after { content: ""; position: absolute; left: 7.5px; top: 19px; bottom: 0; width: 1px; background: var(--line); }
   .timeline li:last-child::after { display: none; }
-  .timeline time { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .timeline time { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
 
   /* Track and resubmit */
-  .lookup { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
-  .lookup .input.code { text-transform: uppercase; font-family: var(--mono); letter-spacing: .04em; }
-  @media (max-width: 720px) { .lookup { grid-template-columns: 1fr; } }
-  .result-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 20px 0 6px; }
-  .result-head h3 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
-  .resubmit-card { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: var(--radius); padding: 16px 18px; margin-top: 20px; }
-  .resubmit-card h4 { margin: 0 0 4px; font-size: 14px; color: var(--warn); }
-  .resubmit-card > p { margin: 0 0 14px; font-size: 13px; color: var(--text-2); }
-  .resubmit-card .dropzone { background: var(--surface); }
-  .success { display: flex; gap: 14px; align-items: flex-start; background: var(--ok-soft); border: 1px solid var(--ok-line); border-radius: var(--radius); padding: 16px 18px; margin-top: 20px; }
-  .success .check { width: 32px; height: 32px; border-radius: 50%; background: var(--ok); color: #fff; display: grid; place-items: center; flex: none; }
+  .result-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 18px 0 6px; min-width: 0; }
+  .result-head h3 { flex-basis: 100%; margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+  .resubmit-card { margin-top: 18px; padding: 16px; border-radius: 14px; background: var(--warn-soft); min-width: 0; }
+  .resubmit-card h4 { margin: 0 0 4px; font-size: 16px; color: #c77700; }
+  .success { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 16px; border-radius: 14px; background: var(--ok-soft); min-width: 0; }
+  .success .check { width: 30px; height: 30px; border-radius: 50%; background: var(--ok); color: #fff; display: grid; place-items: center; flex: none; }
   .success strong { display: block; }
-  .success p { margin: 4px 0 0; color: var(--text-2); }
-  .ref-badge { font-family: var(--mono); background: var(--surface); border: 1px solid var(--line); padding: 3px 8px; border-radius: 6px; font-weight: 600; display: inline-block; }
+  .success p { margin: 4px 0 0; color: var(--text-2); overflow-wrap: anywhere; }
+  .ref-badge { font-family: var(--mono); font-weight: 600; background: #fff; padding: 3px 8px; border-radius: 8px; overflow-wrap: anywhere; }
 
   /* Sign in and team */
-  .auth-wrap { display: grid; place-items: center; min-height: min(70vh, 640px); padding: 12px 0; }
-  .auth-card { width: 100%; max-width: 420px; padding: clamp(22px, 4vw, 32px); }
-  .auth-card h1 { font-size: 20px; margin: 16px 0 4px; letter-spacing: -.01em; }
-  .auth-card .card-sub { margin-bottom: 0; }
-  .auth-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; }
+  .auth-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; margin-bottom: 12px; }
   .reviewer-list { list-style: none; margin: 0; padding: 0; }
-  .reviewer-list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .reviewer-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 0; border-bottom: .5px solid var(--line); min-width: 0; }
   .reviewer-list li:last-child { border-bottom: 0; }
-  .reviewer-list .info { flex: 1 1 180px; min-width: 0; }
+  .reviewer-list .info { flex: 1 1 150px; min-width: 0; }
   .reviewer-list .info strong { display: block; overflow-wrap: anywhere; }
   .reviewer-list .info small { color: var(--muted); overflow-wrap: anywhere; }
 
   /* Toast */
   .toast {
-    position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 20px); opacity: 0;
-    background: var(--text); color: var(--surface); padding: 11px 16px; border-radius: 12px;
-    box-shadow: var(--shadow-lg); font-weight: 500; transition: all .25s; pointer-events: none; z-index: 30;
-    max-width: calc(100vw - 32px); text-align: center;
+    position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom));
+    transform: translate(-50%, 20px); opacity: 0; pointer-events: none; z-index: 30;
+    max-width: calc(100vw - 32px); padding: 11px 18px; border-radius: 14px;
+    background: rgba(0, 0, 0, .82); color: #fff; font-size: 15px; font-weight: 500;
+    text-align: center; overflow-wrap: anywhere; transition: all .25s;
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
-
-  /* Responsive */
-  @media (max-width: 1100px) {
-    .app { grid-template-columns: 200px 1fr; }
-    main { padding: 24px 24px 48px; }
-    .type-picker { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  }
-  @media (max-width: 1000px) { .grid-2 { grid-template-columns: 1fr; } }
-  @media (max-width: 900px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 760px) {
-    .app { display: block; }
-    aside {
-      position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 20;
-      height: auto; flex-direction: row; align-items: stretch; gap: 0;
-      padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-      border-right: 0; border-top: 1px solid var(--line);
-      background: var(--surface);
-      background: color-mix(in srgb, var(--surface) 92%, transparent);
-      backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px);
-    }
-    .brand, .nav-label, .sidebar-foot { display: none; }
-    .nav-wrap { flex: 1; min-width: 0; }
-    nav { flex-direction: row; gap: 4px; }
-    .nav-btn { flex: 1; flex-direction: column; justify-content: center; gap: 3px; padding: 8px 4px; font-size: 11.5px; min-height: 56px; border-radius: 12px; text-align: center; }
-    .nav-btn svg { width: 20px; height: 20px; }
-    main { padding: 20px 16px calc(96px + env(safe-area-inset-bottom)); }
-    .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
-  }
-  @media (max-width: 640px) {
-    .page-head { flex-direction: column; align-items: stretch; }
-    .card + .card { margin-top: 16px; }
-    .stats { gap: 10px; }
-    .stat { padding: 14px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .type-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-    .type-opt label { padding: 12px 4px; font-size: 12px; min-height: 64px; }
-    .input, .select, .textarea { font-size: 16px; }
-    .textarea { min-height: 120px; }
-    .toolbar { flex-direction: column; align-items: stretch; }
-    .toolbar .select { width: 100%; }
-    .toolbar .search { flex: none; }
-    table, tbody { display: block; width: 100%; }
-    thead { display: none; }
-    tbody tr.row {
-      display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center;
-      padding: 14px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
-    }
-    tbody tr.row.sel { border-color: var(--brand); }
-    tbody tr.row td { display: contents; }
-    tbody tr.row td:first-child { grid-column: 1 / -1; padding: 0; border: 0; }
-    tbody tr.row td:nth-child(2) { padding: 0; border: 0; }
-    tbody tr.row td:nth-child(3) { padding: 0; border: 0; justify-self: end; }
-    tbody tr.empty-row, tbody tr.empty-row td { display: block; padding: 0; border: 0; background: none; }
-    .detail-head { flex-direction: column; }
-    .decision-bar { display: grid; grid-template-columns: 1fr 1fr; }
-    .decision-bar .btn { width: 100%; min-height: 46px; }
-    .decision-bar .btn:last-child { grid-column: 1 / -1; }
-    .note-row { flex-direction: column; }
-    .note-row .vis-select { width: 100%; }
-    .note-row .btn { width: 100%; }
-    .body-box { max-height: 40vh; }
-    .actions { flex-direction: column-reverse; }
-    .actions .btn { width: 100%; }
-    .file-chip .size { flex: 1; }
-    .assign-row .select { width: 100%; }
-  }
-  @media (max-width: 380px) {
-    main { padding-left: 12px; padding-right: 12px; }
-    .card { padding: 14px; }
-    .stats { grid-template-columns: 1fr 1fr; }
-    .stat span { font-size: 11px; }
-    .type-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .decision-bar { grid-template-columns: 1fr; }
-    .decision-bar .btn:last-child { grid-column: auto; }
-  }
-  @media (min-width: 1600px) {
-    .app { grid-template-columns: 260px 1fr; }
-    main { padding: 36px 48px 60px; }
-  }
-  @media (hover: none) {
-    tbody tr.row:hover { background: transparent; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition: none !important; }
-  }
-
-  /* =========================================================
-     iOS THEME: white background, iOS-style components.
-     Selectors use :root:root so they win over the dark-mode
-     variables above, keeping the app white in all modes.
-     ========================================================= */
-  :root:root {
-    color-scheme: light;
-    --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F2F2F7;
-    --text: #000000; --text-2: #3C3C43; --muted: #8E8E93; --line: #E5E5EA;
-    --brand: #007AFF; --brand-600: #0062CC; --brand-soft: #E5F0FF;
-    --ok: #34C759; --ok-soft: #E8F8ED; --ok-line: #B6EBC6;
-    --warn: #FF9500; --warn-soft: #FFF3E0;
-    --bad: #FF3B30; --bad-soft: #FFE9E7;
-    --info: #8E8E93; --info-soft: #F2F2F7;
-    --radius: 14px;
-    --shadow: none;
-    --shadow-lg: 0 8px 30px rgba(0, 0, 0, .14);
-    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Inter, system-ui, sans-serif;
-    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  }
-
-  html, body { background: #FFFFFF; }
-  body {
-    font-family: var(--font); font-size: 17px; line-height: 1.4; color: #000;
-    letter-spacing: -.01em; -webkit-tap-highlight-color: transparent;
-    padding-top: env(safe-area-inset-top);
-  }
-
-  /* Layout: single column, centred, room for the tab bar */
-  .app { display: block; min-height: 100%; }
-  main {
-    width: 100%; max-width: 720px; margin: 0 auto;
-    padding: 8px 20px calc(120px + env(safe-area-inset-bottom));
-  }
-
-  /* Tab bar (bottom, translucent, hairline top border) */
-  aside {
-    position: fixed; left: 50%; bottom: 0; top: auto; z-index: 20;
-    transform: translateX(-50%);
-    width: min(100%, 600px); height: auto; min-width: 0;
-    flex-direction: row; align-items: stretch; gap: 0;
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, .86);
-    border: 0; border-top: 0.5px solid #C6C6C8;
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-  }
-  .brand, .nav-label, .sidebar-foot { display: none !important; }
-  .nav-wrap { flex: 1; min-width: 0; flex-direction: row; }
-  nav { flex-direction: row; width: 100%; gap: 0; justify-content: space-around; }
-  .nav-btn {
-    flex: 1; min-width: 0; min-height: 50px; padding: 4px 2px;
-    flex-direction: column; justify-content: center; align-items: center; gap: 3px;
-    background: none; border: 0; border-radius: 0;
-    color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: 0;
-    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .nav-btn svg { width: 25px; height: 25px; stroke-width: 1.8; }
-  .nav-btn:hover { background: none; color: var(--muted); }
-  .nav-btn.active { background: none; color: var(--brand); }
-  .nav-btn:active { opacity: .5; }
-
-  /* Large iOS titles */
-  .page-head { margin: 0 0 20px; padding-top: 12px; align-items: flex-end; }
-  .page-head h1 { font-size: 34px; font-weight: 700; letter-spacing: .37px; line-height: 1.1; margin: 0 0 4px; }
-  .page-head p { font-size: 15px; color: var(--muted); }
-
-  /* Grouped inset cards */
-  .card {
-    background: #FFFFFF; border: 0.5px solid var(--line); border-radius: 14px;
-    box-shadow: none; padding: 16px;
-  }
-  .card + .card { margin-top: 16px; }
-  .card-title { font-size: 17px; font-weight: 600; margin: 0 0 2px; }
-  .card-sub { font-size: 15px; color: var(--muted); margin: 0 0 14px; }
-
-  /* Stats as small iOS tiles */
-  .stat { border: 0.5px solid var(--line); border-radius: 14px; box-shadow: none; padding: 14px 16px; }
-  .stat span { font-size: 13px; color: var(--muted); font-weight: 500; }
-  .stat strong { font-size: 30px; font-weight: 700; letter-spacing: .37px; margin-top: 2px; }
-
-  .session-bar {
-    background: transparent; border: 0; border-bottom: 0.5px solid var(--line); border-radius: 0;
-    padding: 2px 0 12px; margin-bottom: 16px; font-size: 15px; color: var(--muted);
-  }
-  .session-bar strong { color: #000; }
-
-  /* Forms: iOS filled fields */
-  .field-label { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; letter-spacing: 0; }
-  .input, .select, .textarea {
-    background: var(--surface-2); border: 0; border-radius: 10px;
-    padding: 11px 12px; min-height: 44px; font-size: 17px;
-  }
-  .input:focus, .select:focus, .textarea:focus {
-    background: var(--surface-2); border: 0; box-shadow: 0 0 0 3px rgba(0, 122, 255, .35);
-  }
-  .hint { font-size: 13px; color: var(--muted); }
-  .error { font-size: 15px; color: var(--bad); }
-
-  .type-opt label {
-    background: var(--surface-2); border: 0; border-radius: 14px;
-    font-size: 13px; font-weight: 500; color: var(--text-2); min-height: 72px;
-  }
-  .type-opt label:hover { border: 0; color: #000; }
-  .type-opt input:checked + label {
-    background: var(--brand-soft); color: var(--brand); border: 0;
-    box-shadow: inset 0 0 0 2px var(--brand);
-  }
-
-  .dropzone { background: var(--surface-2); border: 1px dashed #C7C7CC; border-radius: 14px; }
-  .dropzone:hover, .dropzone:focus-visible, .dropzone.drag { background: var(--brand-soft); border-color: var(--brand); }
-  .dropzone strong { font-size: 15px; font-weight: 600; }
-  .dropzone span { font-size: 13px; }
-  .file-chip { background: var(--surface-2); border: 0; border-radius: 12px; }
-
-  /* Buttons: filled (primary), tinted (secondary), red/green/orange */
-  .btn {
-    min-height: 44px; padding: 10px 18px; border-radius: 12px;
-    background: var(--brand); color: #fff; font-size: 17px; font-weight: 600; box-shadow: none;
-  }
-  .btn:hover { background: var(--brand-600); }
-  .btn:active { opacity: .6; transform: none; }
-  .btn:disabled { opacity: .4; cursor: not-allowed; }
-  .btn.ghost { background: var(--brand-soft); color: var(--brand); border: 0; }
-  .btn.ghost:hover { background: #D3E6FF; }
-  .btn.ok { background: var(--ok); }     .btn.ok:hover { background: #2FB350; }
-  .btn.warn { background: var(--warn); } .btn.warn:hover { background: #E88600; }
-  .btn.danger { background: var(--bad); } .btn.danger:hover { background: #E0332A; }
-  .btn.sm { min-height: 34px; padding: 6px 12px; font-size: 15px; border-radius: 10px; }
-  .actions { gap: 12px; }
-
-  /* iOS status pills */
-  .pill { font-size: 13px; font-weight: 500; padding: 2px 9px; }
-  .pill::before { display: none; }
-  .pill.pending { background: #F2F2F7; color: #636366; }
-  .pill.under_review, .pill.changes_requested { background: #FFF3E0; color: #C77700; }
-  .pill.approved { background: var(--ok-soft); color: #248A3D; }
-  .pill.rejected { background: var(--bad-soft); color: #D70015; }
-  .type-tag { font-size: 13px; background: var(--surface-2); border: 0; border-radius: 6px; color: var(--text-2); }
-  .version-badge { background: var(--surface-2); border: 0; font-size: 12px; }
-  .role-tag { font-size: 12px; background: var(--brand-soft); color: var(--brand); }
-  .role-tag.reviewer { background: var(--surface-2); color: var(--text-2); }
-
-  /* Queue: desktop table with hairline rows */
-  th {
-    font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: 0;
-    color: var(--muted); border-bottom: 0.5px solid var(--line); padding: 8px;
-  }
-  td { border-bottom: 0.5px solid var(--line); padding: 12px 8px; }
-  tbody tr.row:hover { background: var(--surface-2); }
-  tbody tr.sel { background: var(--brand-soft); }
-  .title { font-size: 17px; font-weight: 600; }
-  .meta { font-size: 13px; }
-  .empty { color: var(--muted); }
-  .empty strong { color: #000; font-size: 17px; }
-  .kbd { background: var(--surface-2); border: 0; }
-
-  /* Detail */
-  .detail-head h2 { font-size: 22px; font-weight: 700; letter-spacing: .2px; }
-  .submitter { background: var(--surface-2); border: 0; border-radius: 14px; padding: 12px 14px; }
-  .avatar { background: var(--brand); color: #fff; font-size: 14px; }
-  .who { font-size: 17px; }
-  .email { font-size: 15px; }
-  .section-label {
-    font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .02em;
-    color: var(--muted); margin: 24px 0 8px 4px;
-  }
-  .body-box, .attach, .note-list li { background: var(--surface-2); border: 0; border-radius: 12px; }
-  .attach .name { font-size: 17px; }
-  .decision-bar .btn { font-size: 16px; }
-  .timeline li::before { background: var(--brand); box-shadow: none; }
-  .timeline li::after { background: var(--line); }
-  .timeline li { font-size: 15px; }
-  .timeline time { font-size: 13px; }
-
-  /* Sign in and team */
-  .auth-wrap { min-height: auto; padding: 24px 0 0; }
-  .auth-card { background: transparent; border: 0; box-shadow: none; padding: 0; max-width: 100%; }
-  .auth-card h1 { font-size: 34px; font-weight: 700; letter-spacing: .37px; }
-  .auth-icon { background: var(--brand-soft); color: var(--brand); border-radius: 14px; width: 56px; height: 56px; }
-  .reviewer-list li { border-bottom: 0.5px solid var(--line); }
-  .reviewer-list li:last-child { border-bottom: 0; }
-
-  /* Feedback */
-  .toast {
-    bottom: calc(100px + env(safe-area-inset-bottom));
-    background: rgba(0, 0, 0, .82); color: #fff; border-radius: 14px;
-    font-size: 15px; font-weight: 500; padding: 11px 18px;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  }
-  .success { background: var(--ok-soft); border: 0; border-radius: 14px; }
-  .ref-badge { background: #fff; border: 0; border-radius: 8px; }
-  .resubmit-card { background: var(--warn-soft); border: 0; border-radius: 14px; }
-  .kbd-hint { font-size: 13px; }
-
-  /* Phones: iOS list rows with separators, no boxed rows */
-  @media (max-width: 640px) {
-    main { padding: 4px 16px calc(120px + env(safe-area-inset-bottom)); }
-    .page-head { flex-direction: column; align-items: stretch; }
-    tbody tr.row {
-      background: #FFFFFF; border: 0; border-bottom: 0.5px solid var(--line);
-      border-radius: 0; margin: 0; padding: 12px 4px;
-    }
-    tbody tr.row.sel { background: var(--brand-soft); border-radius: 10px; }
-    .card { padding: 14px; }
-    .stat strong { font-size: 26px; }
-    .kbd-hint { display: none; }
-  }
-  @media (hover: none) {
-    .kbd-hint { display: none; }
-  }
-
-  /* =========================================================
-     MOBILE-ONLY LAYOUT
-     One column, phone widths. Desktop just shows a centred
-     phone-width column. Nothing may extend past the screen.
-     ========================================================= */
-
-  html, body {
-    max-width: 100%;
-    overflow-x: hidden;
-    -webkit-text-size-adjust: 100%;
-  }
-
-  /* Single column everywhere */
-  .app { display: block; width: 100%; max-width: 100%; }
-  main {
-    width: 100%; max-width: 480px; margin: 0 auto;
-    padding: 4px 16px calc(112px + env(safe-area-inset-bottom));
-    min-width: 0; overflow-x: hidden;
-  }
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .grid-2 { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .type-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .form-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
-  .lookup { grid-template-columns: minmax(0, 1fr); }
-  .decision-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .decision-bar .btn { width: 100%; min-width: 0; }
-  .decision-bar .btn:last-child { grid-column: 1 / -1; }
-  .note-row { flex-direction: column; align-items: stretch; }
-  .note-row .vis-select { width: 100%; min-width: 0; }
-  .note-row .btn { width: 100%; }
-  .actions { flex-direction: column-reverse; }
-  .actions .btn { width: 100%; }
-  .toolbar { flex-direction: column; align-items: stretch; }
-  .toolbar .select, .toolbar .search { width: 100%; min-width: 0; flex: none; }
-  .assign-row { flex-direction: column; align-items: stretch; }
-  .assign-row .select, .assign-row .btn { width: 100%; }
-  .kbd-hint { display: none !important; }
-  .page-head { flex-direction: column; align-items: stretch; }
-
-  /* Tab bar spans the phone width */
-  aside {
-    left: 0; right: 0; width: 100%; transform: none;
-    max-width: 100vw; overflow: hidden;
-  }
-
-  /* Queue: each submission is a list row */
-  table, thead, tbody { display: block; width: 100%; max-width: 100%; }
-  thead { display: none; }
-  tbody tr.row, tbody tr.empty-row {
-    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px;
-    align-items: center; width: 100%; max-width: 100%; min-width: 0;
-    padding: 12px 4px; margin: 0; background: #FFFFFF;
-    border: 0; border-bottom: 0.5px solid var(--line); border-radius: 0;
-  }
-  tbody tr.row.sel { background: var(--brand-soft); border-radius: 10px; border-bottom-color: transparent; }
-  tbody tr.row td { display: contents; }
-  tbody tr.row td:first-child { grid-column: 1 / -1; min-width: 0; padding: 0; border: 0; }
-  tbody tr.row td:nth-child(2) { padding: 0; border: 0; min-width: 0; }
-  tbody tr.row td:nth-child(3) { padding: 0; border: 0; justify-self: end; min-width: 0; }
-  tbody tr.empty-row td { display: block; padding: 0; border: 0; }
-
-  /* Long text never pushes past the screen edge */
-  .card, .stat, .submitter, .attach, .file-chip, .body-box, .note-list li,
-  .timeline li, .result-head, .detail-head, .dropzone, .resubmit-card,
-  .success, .auth-card, .session-bar, .detail-head > div, .submitter > div,
-  .title, .meta, .email, .who, .desc, .name, .field-label, .hint, .error,
-  .ref-badge, .mono, .card-sub, .card-title, .result-head h3, .detail-head h2,
-  .section-label, .pill, .type-tag, .version-badge, .status-line,
-  .assignee-badge, .role-tag {
-    min-width: 0; max-width: 100%;
-    overflow-wrap: anywhere; word-break: break-word;
-  }
-  .status-line { flex-wrap: wrap; }
-  .card { overflow: hidden; }
-
-  /* File names wrap onto the screen, never run off it */
-  .attach { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .attach .name {
-    flex: 1 1 0; min-width: 0; white-space: normal;
-    overflow-wrap: anywhere; word-break: break-all;
-  }
-  .attach .meta { flex: none; }
-  .attach .btn { flex: none; }
-  .file-chip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .file-chip .name {
-    flex: 1 1 0; min-width: 0; white-space: normal;
-    overflow-wrap: anywhere; word-break: break-all;
-  }
-  .file-chip .size { flex: none; }
-  .file-chip .btn { flex: none; }
-
-  /* Previews fit the card width */
-  .preview, img.preview, video.preview {
-    display: block; width: 100%; max-width: 100%; height: auto;
-    max-height: 55vh; object-fit: contain; margin-top: 12px;
-    border-radius: 12px; border: 0.5px solid var(--line);
-  }
-  #previewSlot { width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
-  img, video, iframe, canvas, svg { max-width: 100%; }
-
-  /* Long pasted text scrolls inside its own box, never sideways */
-  .body-box {
-    width: 100%; max-height: 40vh; overflow-x: hidden; overflow-y: auto;
-    white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
-  }
-  .desc { overflow-wrap: anywhere; }
-
-  /* Reference and email in headers wrap */
-  .ref-badge, .mono { overflow-wrap: anywhere; word-break: break-all; }
-  .submitter { display: flex; align-items: center; gap: 10px; }
-  .submitter > div { min-width: 0; flex: 1 1 0; }
-
-  /* Form inputs fill the width */
-  .input, .select, .textarea { width: 100%; max-width: 100%; min-width: 0; }
-  .type-opt label { min-width: 0; }
-  .dropzone strong, .dropzone span { overflow-wrap: anywhere; }
-
-  /* Toasts fit the screen */
-  .toast { max-width: calc(100vw - 32px); overflow-wrap: anywhere; }
-
-  /* =========================================================
-     PHONE ONLY, STABLE LAYOUT
-     Fixed sizes for the drop area, file row and preview, so
-     choosing or previewing a file never moves the page.
-     ========================================================= */
-
-  .kbd-hint, .sidebar-foot { display: none !important; }
-  html, body { overflow-x: hidden; max-width: 100%; }
-
-  /* Drop area: fixed height, never hidden */
-  .dropzone {
-    min-height: 96px; display: flex; flex-direction: column;
-    justify-content: center; align-items: center; gap: 4px;
-  }
-
-  /* File row: always present, fixed height */
-  .file-chip, .file-chip.show {
-    display: flex; align-items: center; gap: 10px;
-    min-height: 56px; margin-top: 10px; padding: 10px 12px;
-  }
-  .file-chip .name {
-    flex: 1 1 0; min-width: 0; white-space: normal;
-    overflow-wrap: anywhere; word-break: break-all;
-  }
-  .file-chip .size { flex: none; min-width: 52px; text-align: right; color: var(--muted); font-size: 13px; }
-  .file-chip .btn { flex: none; }
-
-  /* Preview: reserved box, image or video fits inside it */
-  .preview-box {
-    display: grid; place-items: center; overflow: hidden;
-    width: 100%; max-width: 100%; aspect-ratio: 4 / 3; max-height: 55vh;
-    margin-top: 12px; border-radius: 12px; background: var(--surface-2);
-  }
-  .preview-box > img,
-  .preview-box > video {
-    width: 100%; height: 100%; object-fit: contain;
-    margin: 0; border: 0; border-radius: 12px;
-  }
-  .preview-box .hint { margin: 0; }
 </style>
 </head>
 <body>
 
 <div class="app">
   <aside>
-    <div class="brand">
-      <div class="logo" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l6 6v10H4z"/><path d="M14 4v6h6"/></svg>
-      </div>
-      <div>
-        <strong>Content Desk</strong>
-        <small>Submissions &amp; review</small>
-      </div>
-    </div>
-
+    <div class="brand"></div>
     <div class="nav-wrap">
       <div class="nav-label" id="navLabel">Workspace</div>
       <nav aria-labelledby="navLabel">
         <button type="button" class="nav-btn active" data-view="submit">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          New submission
+          Submit
         </button>
         <button type="button" class="nav-btn" data-view="track">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          Track status
+          Track
         </button>
         <button type="button" class="nav-btn" data-view="review">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>
-          IT review
+          Review
         </button>
         <button type="button" class="nav-btn hidden" id="navManage" data-view="manage">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 11h4M19 9v4"/></svg>
-          Manage team
+          Team
         </button>
       </nav>
     </div>
-
-    <div class="sidebar-foot">Supabase-backed</div>
+    <div class="sidebar-foot"></div>
   </aside>
 
   <main>
@@ -763,15 +298,13 @@
     <!-- SUBMIT -->
     <section id="view-submit" class="view">
       <div class="page-head">
-        <div>
-          <h1>New submission</h1>
-          <p>Send a form, article, document, picture, or video for review.</p>
-        </div>
+        <h1>New submission</h1>
+        <p>Send any files for review. You can select several at once.</p>
       </div>
 
       <div class="card">
         <form id="submitForm" novalidate>
-          <div class="field-label" style="margin-bottom:10px" id="typeLabel">What are you submitting?</div>
+          <span class="field-label" id="typeLabel">What are you submitting?</span>
           <div class="type-picker" role="radiogroup" aria-labelledby="typeLabel">
             <div class="type-opt"><input type="radio" name="type" id="t-form" value="form" checked><label for="t-form"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Form</label></div>
             <div class="type-opt"><input type="radio" name="type" id="t-article" value="article"><label for="t-article"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h9l4 4v12H6z"/><path d="M9 12h7M9 16h5"/></svg>Article</label></div>
@@ -780,20 +313,20 @@
             <div class="type-opt"><input type="radio" name="type" id="t-video" value="video"><label for="t-video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>Video</label></div>
           </div>
 
-          <div class="form-grid" style="margin-top:22px">
+          <div class="form-stack">
             <div>
               <label class="field-label" for="name">Your name</label>
-              <input class="input" id="name" autocomplete="name" maxlength="120" required>
+              <input class="input" id="name" autocomplete="name" maxlength="120">
             </div>
             <div>
               <label class="field-label" for="email">Work email</label>
-              <input class="input" id="email" type="email" autocomplete="email" maxlength="254" required>
+              <input class="input" id="email" type="email" autocomplete="email" maxlength="254">
             </div>
-            <div class="full">
+            <div>
               <label class="field-label" for="title">Title</label>
-              <input class="input" id="title" placeholder="e.g. Q4 onboarding form" maxlength="200" required>
+              <input class="input" id="title" placeholder="e.g. Q4 onboarding pack" maxlength="200">
             </div>
-            <div class="full">
+            <div>
               <label class="field-label" for="description">Short description</label>
               <textarea class="textarea" id="description" style="min-height:72px" maxlength="2000" placeholder="Context the reviewer should know"></textarea>
             </div>
@@ -806,23 +339,18 @@
                 <option>Email to department</option>
               </select>
             </div>
-            <div id="bodyField" class="full hidden">
+            <div id="bodyField" class="hidden">
               <label class="field-label" for="body">Article body</label>
               <textarea class="textarea" id="body" style="min-height:180px" maxlength="100000"></textarea>
             </div>
-            <div id="fileField" class="full">
-              <span class="field-label" id="fileLabel">File</span>
+            <div>
+              <span class="field-label" id="fileLabel">Files</span>
               <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-describedby="fileHint">
-                <strong>Drop a file here or press Enter to browse</strong>
-                <span id="fileHint"></span>
+                <strong>Tap to choose files</strong>
+                <span id="fileHint">Any file type, several at once</span>
               </div>
-              <input type="file" id="file" class="sr-only" tabindex="-1" aria-label="Choose a file">
-              <div class="file-chip" id="fileChip">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
-                <span class="name" id="fileName"></span>
-                <span class="size" id="fileSize"></span>
-                <button type="button" class="btn ghost sm" id="removeFile">Remove</button>
-              </div>
+              <input type="file" id="file" class="sr-only" multiple tabindex="-1" aria-label="Choose files">
+              <div class="file-list" id="fileList" aria-live="polite"></div>
             </div>
           </div>
 
@@ -840,7 +368,7 @@
         </div>
         <div>
           <strong>Submission received</strong>
-          <p>Your reference is <span class="ref-badge" id="receiptRef"></span>. Keep it with your email address to track progress.</p>
+          <p>Your reference is <span class="ref-badge" id="receiptRef"></span>. Keep it with your email to track progress.</p>
           <div class="inline-actions">
             <button type="button" class="btn ghost sm" id="copyRefBtn">Copy reference</button>
             <button type="button" class="btn ghost sm" id="trackFromReceipt">Track this submission</button>
@@ -852,22 +380,22 @@
     <!-- TRACK -->
     <section id="view-track" class="view hidden">
       <div class="page-head">
-        <div>
-          <h1>Track status</h1>
-          <p>Enter your reference number and the email you submitted with.</p>
-        </div>
+        <h1>Track status</h1>
+        <p>Enter your reference number and the email you submitted with.</p>
       </div>
       <div class="card">
         <form id="trackForm" novalidate>
-          <div class="lookup">
+          <div class="form-stack" style="margin-top:0">
             <div>
               <label class="field-label" for="trackRef">Reference</label>
-              <input class="input code" id="trackRef" placeholder="CD-XXXXXX" autocomplete="off" spellcheck="false" maxlength="12">
+              <input class="input mono" id="trackRef" placeholder="CD-XXXXXX" autocomplete="off" spellcheck="false" maxlength="12" style="text-transform:uppercase">
             </div>
             <div>
               <label class="field-label" for="trackEmail">Email</label>
               <input class="input" id="trackEmail" type="email" autocomplete="email" maxlength="254">
             </div>
+          </div>
+          <div class="actions">
             <button type="submit" class="btn" id="trackBtn">Look up</button>
           </div>
         </form>
@@ -878,33 +406,39 @@
 
     <!-- SIGN IN -->
     <section id="view-signin" class="view hidden">
-      <div class="auth-wrap">
-        <div class="card auth-card">
-          <div class="auth-icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          </div>
-          <h1>IT reviewer sign in</h1>
-          <p class="card-sub">Only authorised IT staff can review submissions. Accounts are created by an admin.</p>
-          <form id="signInForm" novalidate>
-            <label class="field-label" for="authEmail" style="margin-top:16px">Work email</label>
-            <input class="input" id="authEmail" type="email" autocomplete="username" spellcheck="false">
-            <label class="field-label" for="authPass" style="margin-top:16px">Password</label>
-            <input class="input" id="authPass" type="password" autocomplete="current-password">
-            <p class="error" id="authError" role="alert"></p>
-            <button class="btn" type="submit" id="authBtn" style="width:100%;margin-top:18px">Sign in</button>
-          </form>
-          <p class="hint" style="text-align:center"><button type="button" class="btn ghost sm" id="forgotBtn" style="margin-top:12px">Forgot password?</button></p>
+      <div class="page-head">
+        <div class="auth-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
         </div>
+        <h1>IT reviewer sign in</h1>
+        <p>Only authorised IT staff can review submissions.</p>
+      </div>
+      <div class="card">
+        <form id="signInForm" novalidate>
+          <div class="form-stack" style="margin-top:0">
+            <div>
+              <label class="field-label" for="authEmail">Work email</label>
+              <input class="input" id="authEmail" type="email" autocomplete="username" spellcheck="false">
+            </div>
+            <div>
+              <label class="field-label" for="authPass">Password</label>
+              <input class="input" id="authPass" type="password" autocomplete="current-password">
+            </div>
+          </div>
+          <p class="error" id="authError" role="alert"></p>
+          <div class="actions">
+            <button class="btn" type="submit" id="authBtn">Sign in</button>
+          </div>
+        </form>
+        <p class="center" style="margin:14px 0 0"><button type="button" class="btn ghost sm" id="forgotBtn">Forgot password?</button></p>
       </div>
     </section>
 
     <!-- REVIEW -->
     <section id="view-review" class="view hidden">
       <div class="page-head">
-        <div>
-          <h1>IT review</h1>
-          <p>Check submitted material before it reaches its destination.</p>
-        </div>
+        <h1>Review</h1>
+        <p>Check submissions before they reach their destination.</p>
       </div>
 
       <div class="session-bar">
@@ -919,64 +453,52 @@
         <div class="stat"><span>Approved</span><strong id="stApproved">0</strong></div>
       </div>
 
-      <div class="grid-2">
-        <div class="card">
-          <div class="toolbar">
-            <label class="sr-only" for="search">Search submissions</label>
-            <input class="input search" id="search" type="search" placeholder="Search title, name, email, or reference" autocomplete="off">
-            <label class="sr-only" for="filterStatus">Filter by status</label>
-            <select class="select" id="filterStatus">
-              <option value="all">All statuses</option>
-              <option value="pending">Pending</option>
-              <option value="under_review">Under review</option>
-              <option value="changes_requested">Changes requested</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-            <label class="sr-only" for="filterType">Filter by type</label>
-            <select class="select" id="filterType">
-              <option value="all">All types</option>
-              <option value="form">Form</option>
-              <option value="article">Article</option>
-              <option value="document">Document</option>
-              <option value="picture">Picture</option>
-              <option value="video">Video</option>
-            </select>
-            <label class="sr-only" for="filterAssignee">Filter by assignee</label>
-            <select class="select" id="filterAssignee">
-              <option value="all">Anyone</option>
-              <option value="me">Assigned to me</option>
-              <option value="unassigned">Unassigned</option>
-            </select>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <caption class="sr-only">Submissions</caption>
-              <thead><tr><th scope="col">Submission</th><th scope="col">Type</th><th scope="col">Status</th></tr></thead>
-              <tbody id="queueBody"></tbody>
-            </table>
-          </div>
-          <div class="kbd-hint">
-            <span><span class="kbd">J</span>/<span class="kbd">K</span> move</span>
-            <span><span class="kbd">/</span> search</span>
-            <span><span class="kbd">Alt</span>+<span class="kbd">A</span> approve</span>
-            <span><span class="kbd">Alt</span>+<span class="kbd">R</span> reject</span>
-            <span><span class="kbd">Alt</span>+<span class="kbd">C</span> changes</span>
-            <span><span class="kbd">Esc</span> clear</span>
-          </div>
+      <div class="card">
+        <div class="toolbar">
+          <label class="sr-only" for="search">Search</label>
+          <input class="input" id="search" type="search" placeholder="Search title, name, email, reference" autocomplete="off">
+          <label class="sr-only" for="filterStatus">Status</label>
+          <select class="select" id="filterStatus">
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="under_review">Under review</option>
+            <option value="changes_requested">Changes requested</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <label class="sr-only" for="filterType">Type</label>
+          <select class="select" id="filterType">
+            <option value="all">All types</option>
+            <option value="form">Form</option>
+            <option value="article">Article</option>
+            <option value="document">Document</option>
+            <option value="picture">Picture</option>
+            <option value="video">Video</option>
+          </select>
+          <label class="sr-only" for="filterAssignee">Assignee</label>
+          <select class="select" id="filterAssignee">
+            <option value="all">Anyone</option>
+            <option value="me">Assigned to me</option>
+            <option value="unassigned">Unassigned</option>
+          </select>
         </div>
-
-        <div class="card" id="detail"></div>
+        <div>
+          <table>
+            <caption class="sr-only">Submissions</caption>
+            <thead><tr><th scope="col">Submission</th><th scope="col">Type</th><th scope="col">Status</th></tr></thead>
+            <tbody id="queueBody"></tbody>
+          </table>
+        </div>
       </div>
+
+      <div class="card" id="detail"></div>
     </section>
 
-    <!-- MANAGE -->
+    <!-- TEAM -->
     <section id="view-manage" class="view hidden">
       <div class="page-head">
-        <div>
-          <h1>Manage team</h1>
-          <p>Add or remove reviewers. Admins only.</p>
-        </div>
+        <h1>Team</h1>
+        <p>Add or remove reviewers. Admins only.</p>
       </div>
 
       <div class="card" id="noPermCard">
@@ -994,7 +516,7 @@
           <h2 class="card-title">Add reviewer</h2>
           <p class="card-sub">Creates the account. Share the temporary password securely.</p>
           <form id="addReviewerForm" novalidate>
-            <div class="form-grid">
+            <div class="form-stack" style="margin-top:0">
               <div>
                 <label class="field-label" for="newRevName">Full name</label>
                 <input class="input" id="newRevName" autocomplete="off" maxlength="120">
@@ -1038,6 +560,7 @@
   const SUPABASE_URL = "https://jrcqwbhdkixpygmrzsbe.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyY3F3Ymhka2l4cHlnbXJ6c2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NjE5MDUsImV4cCI6MjEwNzMzNzkwNX0.Ksv28lLGTKXjp7EzSEK4L9LHx6vuIpo6TYwQV-M-ChE";
   const BUCKET = "submissions";
+  const MAX_FILE_MB = 500;
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
@@ -1045,16 +568,10 @@
 
   // ── Constants ───────────────────────────────────────────────
   const MB = 1048576;
+  const REQUIRES_FILE = { form: true, article: false, document: true, picture: true, video: true };
   const STATUS_LABEL = {
     pending: "Pending", under_review: "Under review", changes_requested: "Changes requested",
     approved: "Approved", rejected: "Rejected"
-  };
-  const RULES = {
-    form:     { accept: ".pdf,.doc,.docx,.xls,.xlsx", max: 10,  hint: "PDF or Office document, up to 10 MB", required: true },
-    article:  { accept: ".doc,.docx,.pdf,.txt,.md",   max: 10,  hint: "Optional attachment, up to 10 MB",    required: false },
-    document: { accept: ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt", max: 25, hint: "Up to 25 MB", required: true },
-    picture:  { accept: "image/*", max: 15,  hint: "JPG, PNG, or WEBP, up to 15 MB", required: true },
-    video:    { accept: "video/*", max: 200, hint: "MP4, MOV, or WEBM, up to 200 MB", required: true }
   };
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const SUB_SELECT = "*, notes:submission_notes(*), history:submission_history(*), versions:submission_versions(*)";
@@ -1083,15 +600,13 @@
     return stem + ext;
   }
 
-  function matchesAccept(file, accept) {
-    const rules = accept.split(",").map(a => a.trim().toLowerCase()).filter(Boolean);
-    const name = file.name.toLowerCase();
-    const type = (file.type || "").toLowerCase();
-    return rules.some(rule => {
-      if (rule.startsWith(".")) return name.endsWith(rule);
-      if (rule.endsWith("/*")) return type.startsWith(rule.slice(0, -1));
-      return type === rule;
-    });
+  // Image or video, judged from the MIME type or the file extension
+  function mediaKind(f) {
+    const n = (f.file_name || "").toLowerCase();
+    const m = (f.file_mime || "").toLowerCase();
+    if (m.startsWith("image/") || /\.(jpe?g|png|gif|webp|heic|avif|bmp)$/.test(n)) return "image";
+    if (m.startsWith("video/") || /\.(mp4|mov|webm|m4v|mkv|avi|3gp)$/.test(n)) return "video";
+    return null;
   }
 
   let toastTimer;
@@ -1150,43 +665,51 @@
     return data.signedUrl;
   }
 
-  // Reusable file picker: keyboard accessible, drag and drop, validated
-  function createFilePicker({ zone, input, chip, nameEl, sizeEl, removeBtn, getRule, onError }) {
-    let file = null;
+  // Uploads each file to the incoming folder. Returns the details the database needs.
+  async function uploadFiles(files, btn) {
+    const out = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (btn && files.length > 1) btn.textContent = `Uploading ${i + 1} of ${files.length}…`;
+      const path = `incoming/${uid()}/${safeName(f.name)}`;
+      const { error } = await sb.storage.from(BUCKET).upload(path, f, {
+        contentType: f.type || "application/octet-stream", upsert: false
+      });
+      if (error) throw new Error(`Couldn't upload ${f.name}: ${error.message}`);
+      out.push({ path, name: f.name, size: f.size, mime: f.type || null });
+    }
+    return out;
+  }
 
-    const problem = f => {
-      const rule = getRule();
-      if (!matchesAccept(f, rule.accept)) return `"${f.name}" isn't an accepted file type. ${rule.hint}.`;
-      if (f.size > rule.max * MB) return `"${f.name}" is larger than ${rule.max} MB.`;
-      return null;
-    };
+  // Multi-file picker. The drop area and list keep a fixed size, so choosing
+  // files only changes the text inside them and the page doesn't jump.
+  function createFilePicker({ zone, input, list, onError }) {
+    let files = [];
 
-    // The drop area and file row never hide or appear, so choosing a file
-    // only changes the text inside them and the page doesn't jump.
-    function set(f) {
-      file = f;
-      if (f) {
-        nameEl.textContent = f.name;
-        nameEl.style.color = "";
-        sizeEl.textContent = bytes(f.size);
-      } else {
-        nameEl.textContent = "No file chosen";
-        nameEl.style.color = "var(--muted)";
-        sizeEl.textContent = "";
-        input.value = "";
+    function render() {
+      list.innerHTML = files.length
+        ? files.map((f, i) => `
+            <div class="file-row">
+              <span class="name">${esc(f.name)}</span>
+              <span class="size">${bytes(f.size)}</span>
+              <button type="button" class="btn ghost sm" data-i="${i}" aria-label="Remove ${esc(f.name)}">Remove</button>
+            </div>`).join("")
+        : `<div class="file-row empty"><span class="name">No files chosen</span></div>`;
+      list.querySelectorAll("[data-i]").forEach(b =>
+        b.addEventListener("click", () => { files.splice(Number(b.dataset.i), 1); render(); }));
+    }
+
+    function add(incoming) {
+      const tooBig = [];
+      for (const f of Array.from(incoming || [])) {
+        if (f.size > MAX_FILE_MB * MB) { tooBig.push(f.name); continue; }
+        if (!files.some(x => x.name === f.name && x.size === f.size)) files.push(f);
       }
-      removeBtn.style.visibility = f ? "visible" : "hidden";
-      zone.classList.remove("drag");
+      if (tooBig.length) onError(`Too large (over ${MAX_FILE_MB} MB): ${tooBig.join(", ")}`);
+      render();
     }
 
-    function pick(f) {
-      const msg = problem(f);
-      if (msg) { onError(msg); return false; }
-      set(f);
-      return true;
-    }
-
-    input.addEventListener("change", () => { if (input.files[0]) pick(input.files[0]); });
+    input.addEventListener("change", () => { add(input.files); input.value = ""; });
     zone.addEventListener("click", () => input.click());
     zone.addEventListener("keydown", e => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); }
@@ -1195,24 +718,12 @@
       zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add("drag"); }));
     ["dragleave", "drop"].forEach(ev =>
       zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove("drag"); }));
-    zone.addEventListener("drop", e => {
-      const f = e.dataTransfer && e.dataTransfer.files[0];
-      if (f) pick(f);
-    });
-    removeBtn.addEventListener("click", () => set(null));
-    set(null);
+    zone.addEventListener("drop", e => add(e.dataTransfer && e.dataTransfer.files));
 
+    render();
     return {
-      get: () => file,
-      clear: () => set(null),
-      // Called when the type changes: drop the file if it no longer fits
-      recheck() {
-        if (file && problem(file)) {
-          set(null);
-          return "The attached file doesn't match this type and was removed.";
-        }
-        return null;
-      }
+      get: () => files.slice(),
+      clear: () => { files = []; render(); }
     };
   }
 
@@ -1264,7 +775,7 @@
   }
 
   // ── Auth ────────────────────────────────────────────────────
-  sb.auth.onAuthStateChange((event) => {
+  sb.auth.onAuthStateChange(event => {
     if (event !== "SIGNED_OUT") return;
     user = null; profile = null;
     submissions = []; reviewers = [];
@@ -1340,7 +851,7 @@
 
     if (isReviewer()) {
       $("whoami").innerHTML =
-        `Signed in as <strong>${esc(profile.name)}</strong> · ${esc(profile.email)} · <span class="role-tag ${esc(profile.role)}">${esc(profile.role)}</span>`;
+        `Signed in as <strong>${esc(profile.name)}</strong> · <span class="role-tag ${esc(profile.role)}">${esc(profile.role)}</span>`;
     }
     if (name === "review") refreshReview();
     if (name === "manage") refreshManage();
@@ -1356,24 +867,17 @@
 
   function syncTypeFields() {
     const t = currentType();
-    const rule = RULES[t];
     $("bodyField").classList.toggle("hidden", t !== "article");
-    $("fileLabel").textContent = rule.required ? "File" : "Attachment (optional)";
-    $("fileHint").textContent = rule.hint;
-    $("file").accept = rule.accept;
+    $("fileLabel").textContent = REQUIRES_FILE[t] ? "Files" : "Attachments (optional)";
   }
 
   const picker = createFilePicker({
-    zone: $("dropzone"), input: $("file"), chip: $("fileChip"),
-    nameEl: $("fileName"), sizeEl: $("fileSize"), removeBtn: $("removeFile"),
-    getRule: () => RULES[currentType()],
+    zone: $("dropzone"), input: $("file"), list: $("fileList"),
     onError: msg => { $("submitError").textContent = msg; }
   });
 
-  form.querySelectorAll('input[name="type"]').forEach(r => r.addEventListener("change", () => {
-    syncTypeFields();
-    $("submitError").textContent = picker.recheck() || "";
-  }));
+  form.querySelectorAll('input[name="type"]').forEach(r =>
+    r.addEventListener("change", () => { syncTypeFields(); $("submitError").textContent = ""; }));
 
   $("clearForm").addEventListener("click", () => {
     form.reset();
@@ -1391,7 +895,6 @@
     const fail = (id, msg) => { err.textContent = msg; if (id) $(id).focus(); };
 
     const t = currentType();
-    const rule = RULES[t];
     const v = {
       name: $("name").value.trim(),
       email: $("email").value.trim().toLowerCase(),
@@ -1400,25 +903,18 @@
       body: $("body").value.trim(),
       destination: $("destination").value
     };
-    const file = picker.get();
+    const files = picker.get();
 
     if (!v.name) return fail("name", "Please enter your name.");
     if (!EMAIL_RE.test(v.email)) return fail("email", "Enter a valid email address.");
     if (!v.title) return fail("title", "Please give your submission a title.");
     if (t === "article" && !v.body) return fail("body", "Articles need a body.");
-    if (rule.required && !file) return fail(null, "Please attach a file.");
+    if (REQUIRES_FILE[t] && !files.length) return fail(null, "Please add at least one file.");
 
     busy = true;
     try {
       await withButton($("submitBtn"), "Submitting…", async () => {
-        let path = null;
-        if (file) {
-          path = `incoming/${uid()}/${safeName(file.name)}`;
-          const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, {
-            contentType: file.type || undefined, upsert: false
-          });
-          if (upErr) throw upErr;
-        }
+        const uploaded = await uploadFiles(files, $("submitBtn"));
 
         const { data: ref, error } = await sb.rpc("create_submission", {
           p_type: t,
@@ -1428,10 +924,7 @@
           p_description: v.description || null,
           p_body: t === "article" ? v.body : null,
           p_destination: v.destination,
-          p_file_path: path,
-          p_file_name: file ? file.name : null,
-          p_file_size: file ? file.size : null,
-          p_file_mime: file ? (file.type || null) : null
+          p_files: uploaded
         });
         if (error) throw error;
 
@@ -1504,26 +997,30 @@
         ${messages.map(m => `<li><div class="note-meta"><span>${esc(m.by)}</span><span>${fmt(m.at)}</span></div>${esc(m.text)}</li>`).join("")}
       </ul>` : "";
 
+    const open = d.status === "pending" || d.status === "under_review";
+    const autoNote = open && d.auto_approve_at
+      ? `<p class="hint">Approved automatically on ${fmt(d.auto_approve_at)} unless a reviewer acts first.</p>`
+      : "";
+
+    const filesHtml = (d.files || []).map(f =>
+      `<div class="attach"><span class="name">${esc(f.name)}</span><span class="meta">${bytes(f.size)}</span></div>`
+    ).join("") || `<p class="hint">No files attached.</p>`;
+
     const resubmitHtml = d.status === "changes_requested" ? `
       <div class="resubmit-card">
         <h4>Changes requested</h4>
-        <p>Upload a revised file and it will go back into the review queue.</p>
+        <p class="hint">Add revised files and they go back into the review queue.</p>
         <form id="resubmitForm" novalidate>
-          <span class="field-label" id="resubmitLabel">Revised file (${esc(RULES[d.type].hint.toLowerCase())})</span>
           <div class="dropzone" id="resubmitZone" role="button" tabindex="0">
-            <strong>Drop the revised file here or press Enter to browse</strong>
-            <span>${esc(RULES[d.type].hint)}</span>
+            <strong>Tap to choose revised files</strong>
+            <span>Any file type, several at once</span>
           </div>
-          <input type="file" id="resubmitFile" class="sr-only" tabindex="-1" accept="${esc(RULES[d.type].accept)}" aria-label="Choose revised file">
-          <div class="file-chip" id="resubmitChip">
-            <span class="name" id="resubmitName"></span>
-            <span class="size" id="resubmitSize"></span>
-            <button type="button" class="btn ghost sm" id="resubmitRemove">Remove</button>
-          </div>
+          <input type="file" id="resubmitFile" class="sr-only" multiple tabindex="-1" aria-label="Choose revised files">
+          <div class="file-list" id="resubmitList"></div>
           <label class="field-label" for="resubmitNote" style="margin-top:12px">Note to reviewer (optional)</label>
-          <textarea class="textarea" id="resubmitNote" style="min-height:72px" maxlength="2000" placeholder="What did you change?"></textarea>
+          <textarea class="textarea" id="resubmitNote" maxlength="2000" placeholder="What did you change?"></textarea>
           <p class="error" id="resubmitError" role="alert"></p>
-          <div class="inline-actions">
+          <div class="actions">
             <button type="submit" class="btn" id="resubmitBtn">Resubmit for review</button>
           </div>
         </form>
@@ -1536,10 +1033,13 @@
         <span class="version-badge">v${esc(d.version)}</span>
         ${pill(d.status)}
       </div>
-      <p class="card-sub" style="margin:0 0 12px">Submitted ${fmt(d.submitted_at)} for ${esc(d.destination)}</p>
-      <div class="inline-actions" style="margin:0 0 16px">
+      <p class="card-sub" style="margin:0 0 6px">Submitted ${fmt(d.submitted_at)} for ${esc(d.destination)}</p>
+      ${autoNote}
+      <div class="inline-actions" style="margin:6px 0 4px">
         <button type="button" class="btn ghost sm" id="trackCopy">Copy reference</button>
       </div>
+      <div class="section-label">Files</div>
+      ${filesHtml}
       ${messagesHtml}
       <div class="section-label">History</div>
       <ul class="timeline">${history}</ul>
@@ -1552,9 +1052,7 @@
 
   function bindResubmit(d) {
     const rpicker = createFilePicker({
-      zone: $("resubmitZone"), input: $("resubmitFile"), chip: $("resubmitChip"),
-      nameEl: $("resubmitName"), sizeEl: $("resubmitSize"), removeBtn: $("resubmitRemove"),
-      getRule: () => RULES[d.type],
+      zone: $("resubmitZone"), input: $("resubmitFile"), list: $("resubmitList"),
       onError: msg => { $("resubmitError").textContent = msg; }
     });
 
@@ -1563,28 +1061,21 @@
       if (busy) return;
       const err = $("resubmitError");
       err.textContent = "";
-      const file = rpicker.get();
+      const files = rpicker.get();
       const note = $("resubmitNote").value.trim();
-      if (!file && !d.file_name) { err.textContent = "Please attach a revised file."; return; }
+      if (REQUIRES_FILE[d.type] && !files.length && !(d.files || []).length) {
+        err.textContent = "Please add a revised file.";
+        return;
+      }
 
       busy = true;
       try {
         await withButton($("resubmitBtn"), "Sending…", async () => {
-          let path = null;
-          if (file) {
-            path = `incoming/${uid()}/${safeName(file.name)}`;
-            const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, {
-              contentType: file.type || undefined, upsert: false
-            });
-            if (upErr) throw upErr;
-          }
+          const uploaded = await uploadFiles(files, $("resubmitBtn"));
           const { error } = await sb.rpc("resubmit_submission", {
             p_ref: trackCtx.ref,
             p_email: trackCtx.email,
-            p_file_path: path,
-            p_file_name: file ? file.name : null,
-            p_file_size: file ? file.size : null,
-            p_file_mime: file ? (file.type || null) : null,
+            p_files: uploaded,
             p_note: note || null
           });
           if (error) throw error;
@@ -1683,7 +1174,7 @@
       <tr class="row ${s.ref === selectedRef ? "sel" : ""}" data-ref="${esc(s.ref)}" tabindex="0"
           role="button" aria-pressed="${s.ref === selectedRef}">
         <td>
-          <div class="title">${esc(s.title)}${s.assignee ? ` <span class="note-tag internal">assigned</span>` : ""}</div>
+          <div class="title">${esc(s.title)}${s.assignee ? ` <span class="note-tag">assigned</span>` : ""}</div>
           <div class="meta"><span class="mono">${esc(s.ref)}</span> · ${esc(s.name)} · v${esc(s.version)}</div>
         </td>
         <td><span class="type-tag">${esc(s.type)}</span></td>
@@ -1691,10 +1182,15 @@
       </tr>`).join("");
 
     body.querySelectorAll("tr[data-ref]").forEach(tr => {
-      const pick = () => { selectedRef = tr.dataset.ref; renderQueue(); renderDetail(); };
-      tr.addEventListener("click", pick);
+      const open = () => {
+        selectedRef = tr.dataset.ref;
+        renderQueue();
+        renderDetail();
+        $("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+      tr.addEventListener("click", open);
       tr.addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); }
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
       });
     });
   }
@@ -1706,18 +1202,48 @@
     const s = currentSubmission();
 
     if (!s) {
-      panel.innerHTML = `<div class="empty"><strong>No submission selected</strong>Choose an item from the queue to review it.</div>`;
+      panel.innerHTML = `<div class="empty"><strong>No submission selected</strong>Tap an item in the queue to review it.</div>`;
       return;
     }
 
     const locked = s.status === "approved" || s.status === "rejected";
+    const open = s.status === "pending" || s.status === "under_review";
     const assignee = s.assignee ? reviewers.find(r => r.id === s.assignee) : null;
     const notes = (s.notes || []).slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     const history = (s.history || []).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    const versions = (s.versions || []).slice().sort((a, b) => b.version - a.version);
-    const hasPreview = (s.type === "picture" || s.type === "video") && s.file_path;
+    const allVersions = (s.versions || []).slice()
+      .sort((a, b) => a.version - b.version || new Date(a.created_at) - new Date(b.created_at));
+    const current = allVersions.filter(v => v.version === s.version);
+    const older = allVersions.filter(v => v.version < s.version);
     const reviewerOptions = reviewers.map(r =>
       `<option value="${esc(r.id)}" ${s.assignee === r.id ? "selected" : ""}>${esc(r.name)}</option>`).join("");
+
+    // Each image or video among the current files gets a fixed-size preview box
+    const previews = [];
+    const filesHtml = current.map(f => {
+      const kind = mediaKind(f);
+      let previewHtml = "";
+      if (kind && f.file_path) {
+        const i = previews.push({ path: f.file_path, kind, name: f.file_name }) - 1;
+        previewHtml = `<div class="preview-box" id="preview-${i}"><p class="hint">Loading preview…</p></div>`;
+      }
+      return `
+        <div class="attach">
+          <span class="name">${esc(f.file_name)}</span>
+          <span class="meta">${bytes(f.file_size)}</span>
+          ${f.file_path ? `<button type="button" class="btn ghost sm" data-open="${esc(f.file_path)}">Open</button>` : ""}
+        </div>${previewHtml}`;
+    }).join("") || `<p class="hint">No files attached.</p>`;
+
+    const olderHtml = older.length ? `
+      <div class="section-label">Earlier versions</div>
+      <ul class="note-list">
+        ${older.map(v => `<li><div class="note-meta"><span>v${esc(v.version)}</span><span>${fmt(v.created_at)}</span></div>${esc(v.file_name || "")}</li>`).join("")}
+      </ul>` : "";
+
+    const autoNote = open && s.auto_approve_at
+      ? `<p class="hint">Approved automatically on ${fmt(s.auto_approve_at)} if no reviewer acts first.</p>`
+      : "";
 
     panel.innerHTML = `
       <div class="detail-head">
@@ -1751,31 +1277,20 @@
           <option value="">Unassigned</option>
           ${reviewerOptions}
         </select>
-        <button type="button" class="btn ghost sm" data-act="assign-me"
+        <button type="button" class="btn ghost" data-act="assign-me"
           ${locked || (user && s.assignee === user.id) ? "disabled" : ""}>Assign to me</button>
       </div>
 
-      ${s.description ? `<p class="desc" style="margin-top:16px">${esc(s.description)}</p>` : ""}
+      ${s.description ? `<p class="desc">${esc(s.description)}</p>` : ""}
       ${s.type === "article" && s.body ? `<div class="section-label">Article</div><div class="body-box">${esc(s.body)}</div>` : ""}
 
-      ${s.file_name ? `
-        <div class="section-label">Attachment</div>
-        <div class="attach">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
-          <span class="name">${esc(s.file_name)}</span>
-          <span class="meta">${bytes(s.file_size)}</span>
-          ${s.file_path ? `<button type="button" class="btn ghost sm" data-open="${esc(s.file_path)}">Open</button>` : ""}
-        </div>
-        ${hasPreview ? `<div id="previewSlot" class="preview-box"><p class="hint">Loading preview…</p></div>` : ""}` : ""}
-
-      ${versions.length > 1 ? `
-        <div class="section-label">Versions</div>
-        <ul class="note-list">
-          ${versions.map(v => `<li><div class="note-meta"><span>v${esc(v.version)} · ${esc(v.file_name || "no file")}</span><span>${fmt(v.created_at)}</span></div></li>`).join("")}
-        </ul>` : ""}
+      <div class="section-label">Files (${current.length})</div>
+      ${filesHtml}
+      ${olderHtml}
 
       <div class="section-label">Decision</div>
-      <div class="decision-bar">
+      ${autoNote}
+      <div class="decision">
         <button type="button" class="btn ghost" data-act="start" ${s.status !== "pending" ? "disabled" : ""}>Start review</button>
         <button type="button" class="btn warn" data-act="changes" ${locked ? "disabled" : ""}>Request changes</button>
         <button type="button" class="btn danger" data-act="reject" ${locked ? "disabled" : ""}>Reject</button>
@@ -1788,7 +1303,7 @@
         <label class="sr-only" for="noteInput">Note text</label>
         <input class="input" id="noteInput" placeholder="Note text…" maxlength="2000" ${locked ? "disabled" : ""}>
         <label class="sr-only" for="noteVis">Note visibility</label>
-        <select class="select vis-select" id="noteVis" ${locked ? "disabled" : ""}>
+        <select class="select" id="noteVis" ${locked ? "disabled" : ""}>
           <option value="internal">Internal only</option>
           <option value="submitter">Visible to submitter</option>
         </select>
@@ -1810,8 +1325,8 @@
         || `<li>No activity yet.</li>`}</ul>
 
       ${isAdmin() ? `
-        <div class="inline-actions" style="margin-top:20px">
-          <button type="button" class="btn ghost sm" data-act="delete">Delete submission</button>
+        <div class="actions">
+          <button type="button" class="btn danger" data-act="delete">Delete submission</button>
         </div>` : ""}`;
 
     panel.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", () => copyText(b.dataset.copy)));
@@ -1821,22 +1336,19 @@
     const assignSelect = $("assignSelect");
     if (assignSelect) assignSelect.addEventListener("change", () => assign(s, assignSelect.value || null));
 
-    if (hasPreview) loadPreview(s, token);
+    previews.forEach((p, i) => loadPreview(p, i, token));
   }
 
-  async function loadPreview(s, token) {
+  async function loadPreview(p, i, token) {
+    const slot = document.getElementById("preview-" + i);
     try {
-      const url = await signedUrl(s.file_path);
-      if (token !== detailToken) return;
-      const slot = $("previewSlot");
-      if (!slot) return;
-      slot.innerHTML = s.type === "picture"
-        ? `<img class="preview" src="${esc(url)}" alt="Preview of ${esc(s.file_name)}">`
-        : `<video class="preview" controls preload="metadata" src="${esc(url)}"></video>`;
+      const url = await signedUrl(p.path);
+      if (token !== detailToken || !slot) return;
+      slot.innerHTML = p.kind === "image"
+        ? `<img src="${esc(url)}" alt="${esc(p.name)}">`
+        : `<video controls playsinline preload="metadata" src="${esc(url)}"></video>`;
     } catch (ex) {
-      if (token === detailToken && $("previewSlot")) {
-        $("previewSlot").innerHTML = `<p class="hint">Preview unavailable.</p>`;
-      }
+      if (token === detailToken && slot) slot.innerHTML = `<p class="hint">Preview unavailable.</p>`;
     }
   }
 
@@ -1910,10 +1422,10 @@
 
   async function deleteSubmission(s) {
     if (!isAdmin()) { toast("Admins only"); return; }
-    if (!confirm(`Delete ${s.ref} permanently? Its files will be removed too.`)) return;
+    if (!confirm(`Delete ${s.ref} permanently? All its files will be removed too.`)) return;
     busy = true;
     try {
-      const paths = [...new Set([s.file_path, ...(s.versions || []).map(v => v.file_path)].filter(Boolean))];
+      const paths = [...new Set((s.versions || []).map(v => v.file_path).filter(Boolean))];
       if (paths.length) {
         const { error: rmErr } = await sb.storage.from(BUCKET).remove(paths);
         if (rmErr) throw rmErr;
@@ -1947,7 +1459,7 @@
     if (channel) { sb.removeChannel(channel); channel = null; }
   }
 
-  // ── Manage team (admins) ────────────────────────────────────
+  // ── Team (admins) ───────────────────────────────────────────
   async function refreshManage() {
     const allowed = isAdmin();
     $("noPermCard").classList.toggle("hidden", allowed);
@@ -2029,48 +1541,6 @@
       busy = false;
     }
   });
-
-  // ── Keyboard shortcuts (review page only) ───────────────────
-  document.addEventListener("keydown", e => {
-    if ($("view-review").classList.contains("hidden")) return;
-    const el = e.target;
-    const typing = el.matches && el.matches("input, textarea, select");
-
-    if (!typing && !e.altKey && !e.ctrlKey && !e.metaKey) {
-      if (e.key === "j") { e.preventDefault(); moveSelection(1); return; }
-      if (e.key === "k") { e.preventDefault(); moveSelection(-1); return; }
-      if (e.key === "/") { e.preventDefault(); $("search").focus(); return; }
-      if (e.key === "Escape") { selectedRef = null; renderQueue(); renderDetail(); return; }
-    }
-
-    if (e.altKey && !e.ctrlKey && !e.metaKey) {
-      // e.code is used so shortcuts work regardless of keyboard layout or Option-key characters
-      const actions = { KeyA: "approve", KeyR: "reject", KeyC: "changes", KeyS: "start" };
-      if (actions[e.code]) {
-        e.preventDefault();
-        const btn = document.querySelector(`#detail [data-act="${actions[e.code]}"]`);
-        if (btn && !btn.disabled) btn.click();
-        return;
-      }
-      if (e.code === "KeyN") {
-        e.preventDefault();
-        const n = $("noteInput");
-        if (n && !n.disabled) n.focus();
-      }
-    }
-  });
-
-  function moveSelection(dir) {
-    const visible = [...document.querySelectorAll("#queueBody tr[data-ref]")].map(r => r.dataset.ref);
-    if (!visible.length) return;
-    const idx = visible.indexOf(selectedRef);
-    const next = idx === -1 ? (dir > 0 ? 0 : visible.length - 1) : (idx + dir + visible.length) % visible.length;
-    selectedRef = visible[next];
-    renderQueue();
-    renderDetail();
-    const row = document.querySelector(`#queueBody tr[data-ref="${CSS.escape(selectedRef)}"]`);
-    if (row) row.scrollIntoView({ block: "nearest" });
-  }
 
   // ── Init ────────────────────────────────────────────────────
   (async () => {
