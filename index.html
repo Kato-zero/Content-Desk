@@ -557,6 +557,166 @@
   @media (hover: none) {
     .kbd-hint { display: none; }
   }
+
+  /* =========================================================
+     MOBILE-ONLY LAYOUT
+     One column, phone widths. Desktop just shows a centred
+     phone-width column. Nothing may extend past the screen.
+     ========================================================= */
+
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Single column everywhere */
+  .app { display: block; width: 100%; max-width: 100%; }
+  main {
+    width: 100%; max-width: 480px; margin: 0 auto;
+    padding: 4px 16px calc(112px + env(safe-area-inset-bottom));
+    min-width: 0; overflow-x: hidden;
+  }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .type-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .form-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .lookup { grid-template-columns: minmax(0, 1fr); }
+  .decision-bar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .decision-bar .btn { width: 100%; min-width: 0; }
+  .decision-bar .btn:last-child { grid-column: 1 / -1; }
+  .note-row { flex-direction: column; align-items: stretch; }
+  .note-row .vis-select { width: 100%; min-width: 0; }
+  .note-row .btn { width: 100%; }
+  .actions { flex-direction: column-reverse; }
+  .actions .btn { width: 100%; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar .select, .toolbar .search { width: 100%; min-width: 0; flex: none; }
+  .assign-row { flex-direction: column; align-items: stretch; }
+  .assign-row .select, .assign-row .btn { width: 100%; }
+  .kbd-hint { display: none !important; }
+  .page-head { flex-direction: column; align-items: stretch; }
+
+  /* Tab bar spans the phone width */
+  aside {
+    left: 0; right: 0; width: 100%; transform: none;
+    max-width: 100vw; overflow: hidden;
+  }
+
+  /* Queue: each submission is a list row */
+  table, thead, tbody { display: block; width: 100%; max-width: 100%; }
+  thead { display: none; }
+  tbody tr.row, tbody tr.empty-row {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px;
+    align-items: center; width: 100%; max-width: 100%; min-width: 0;
+    padding: 12px 4px; margin: 0; background: #FFFFFF;
+    border: 0; border-bottom: 0.5px solid var(--line); border-radius: 0;
+  }
+  tbody tr.row.sel { background: var(--brand-soft); border-radius: 10px; border-bottom-color: transparent; }
+  tbody tr.row td { display: contents; }
+  tbody tr.row td:first-child { grid-column: 1 / -1; min-width: 0; padding: 0; border: 0; }
+  tbody tr.row td:nth-child(2) { padding: 0; border: 0; min-width: 0; }
+  tbody tr.row td:nth-child(3) { padding: 0; border: 0; justify-self: end; min-width: 0; }
+  tbody tr.empty-row td { display: block; padding: 0; border: 0; }
+
+  /* Long text never pushes past the screen edge */
+  .card, .stat, .submitter, .attach, .file-chip, .body-box, .note-list li,
+  .timeline li, .result-head, .detail-head, .dropzone, .resubmit-card,
+  .success, .auth-card, .session-bar, .detail-head > div, .submitter > div,
+  .title, .meta, .email, .who, .desc, .name, .field-label, .hint, .error,
+  .ref-badge, .mono, .card-sub, .card-title, .result-head h3, .detail-head h2,
+  .section-label, .pill, .type-tag, .version-badge, .status-line,
+  .assignee-badge, .role-tag {
+    min-width: 0; max-width: 100%;
+    overflow-wrap: anywhere; word-break: break-word;
+  }
+  .status-line { flex-wrap: wrap; }
+  .card { overflow: hidden; }
+
+  /* File names wrap onto the screen, never run off it */
+  .attach { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .attach .name {
+    flex: 1 1 0; min-width: 0; white-space: normal;
+    overflow-wrap: anywhere; word-break: break-all;
+  }
+  .attach .meta { flex: none; }
+  .attach .btn { flex: none; }
+  .file-chip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .file-chip .name {
+    flex: 1 1 0; min-width: 0; white-space: normal;
+    overflow-wrap: anywhere; word-break: break-all;
+  }
+  .file-chip .size { flex: none; }
+  .file-chip .btn { flex: none; }
+
+  /* Previews fit the card width */
+  .preview, img.preview, video.preview {
+    display: block; width: 100%; max-width: 100%; height: auto;
+    max-height: 55vh; object-fit: contain; margin-top: 12px;
+    border-radius: 12px; border: 0.5px solid var(--line);
+  }
+  #previewSlot { width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
+  img, video, iframe, canvas, svg { max-width: 100%; }
+
+  /* Long pasted text scrolls inside its own box, never sideways */
+  .body-box {
+    width: 100%; max-height: 40vh; overflow-x: hidden; overflow-y: auto;
+    white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
+  }
+  .desc { overflow-wrap: anywhere; }
+
+  /* Reference and email in headers wrap */
+  .ref-badge, .mono { overflow-wrap: anywhere; word-break: break-all; }
+  .submitter { display: flex; align-items: center; gap: 10px; }
+  .submitter > div { min-width: 0; flex: 1 1 0; }
+
+  /* Form inputs fill the width */
+  .input, .select, .textarea { width: 100%; max-width: 100%; min-width: 0; }
+  .type-opt label { min-width: 0; }
+  .dropzone strong, .dropzone span { overflow-wrap: anywhere; }
+
+  /* Toasts fit the screen */
+  .toast { max-width: calc(100vw - 32px); overflow-wrap: anywhere; }
+
+  /* =========================================================
+     PHONE ONLY, STABLE LAYOUT
+     Fixed sizes for the drop area, file row and preview, so
+     choosing or previewing a file never moves the page.
+     ========================================================= */
+
+  .kbd-hint, .sidebar-foot { display: none !important; }
+  html, body { overflow-x: hidden; max-width: 100%; }
+
+  /* Drop area: fixed height, never hidden */
+  .dropzone {
+    min-height: 96px; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; gap: 4px;
+  }
+
+  /* File row: always present, fixed height */
+  .file-chip, .file-chip.show {
+    display: flex; align-items: center; gap: 10px;
+    min-height: 56px; margin-top: 10px; padding: 10px 12px;
+  }
+  .file-chip .name {
+    flex: 1 1 0; min-width: 0; white-space: normal;
+    overflow-wrap: anywhere; word-break: break-all;
+  }
+  .file-chip .size { flex: none; min-width: 52px; text-align: right; color: var(--muted); font-size: 13px; }
+  .file-chip .btn { flex: none; }
+
+  /* Preview: reserved box, image or video fits inside it */
+  .preview-box {
+    display: grid; place-items: center; overflow: hidden;
+    width: 100%; max-width: 100%; aspect-ratio: 4 / 3; max-height: 55vh;
+    margin-top: 12px; border-radius: 12px; background: var(--surface-2);
+  }
+  .preview-box > img,
+  .preview-box > video {
+    width: 100%; height: 100%; object-fit: contain;
+    margin: 0; border: 0; border-radius: 12px;
+  }
+  .preview-box .hint { margin: 0; }
 </style>
 </head>
 <body>
@@ -1001,18 +1161,22 @@
       return null;
     };
 
+    // The drop area and file row never hide or appear, so choosing a file
+    // only changes the text inside them and the page doesn't jump.
     function set(f) {
       file = f;
       if (f) {
         nameEl.textContent = f.name;
+        nameEl.style.color = "";
         sizeEl.textContent = bytes(f.size);
-        chip.classList.add("show");
-        zone.classList.add("hidden");
       } else {
-        chip.classList.remove("show");
-        zone.classList.remove("hidden", "drag");
+        nameEl.textContent = "No file chosen";
+        nameEl.style.color = "var(--muted)";
+        sizeEl.textContent = "";
         input.value = "";
       }
+      removeBtn.style.visibility = f ? "visible" : "hidden";
+      zone.classList.remove("drag");
     }
 
     function pick(f) {
@@ -1036,6 +1200,7 @@
       if (f) pick(f);
     });
     removeBtn.addEventListener("click", () => set(null));
+    set(null);
 
     return {
       get: () => file,
@@ -1601,7 +1766,7 @@
           <span class="meta">${bytes(s.file_size)}</span>
           ${s.file_path ? `<button type="button" class="btn ghost sm" data-open="${esc(s.file_path)}">Open</button>` : ""}
         </div>
-        ${hasPreview ? `<div id="previewSlot"><p class="hint">Loading preview…</p></div>` : ""}` : ""}
+        ${hasPreview ? `<div id="previewSlot" class="preview-box"><p class="hint">Loading preview…</p></div>` : ""}` : ""}
 
       ${versions.length > 1 ? `
         <div class="section-label">Versions</div>
