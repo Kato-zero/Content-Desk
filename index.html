@@ -58,7 +58,6 @@
   .nav-btn:active { opacity: .5; }
 
   /* Layout */
-  .app { display: block; }
   main {
     width: 100%; max-width: 480px; margin: 0 auto; min-width: 0;
     padding: 8px 16px calc(120px + env(safe-area-inset-bottom));
@@ -78,17 +77,23 @@
   .stat { border: .5px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
   .stat span { font-size: 13px; color: var(--muted); font-weight: 500; }
   .stat strong { display: block; font-size: 26px; font-weight: 700; letter-spacing: .37px; }
-  .session-bar {
-    display: flex; justify-content: space-between; align-items: center; gap: 10px;
-    padding: 2px 0 12px; margin-bottom: 14px; border-bottom: .5px solid var(--line);
-    font-size: 15px; color: var(--muted); min-width: 0;
-  }
-  .session-bar span { min-width: 0; overflow-wrap: anywhere; }
-  .session-bar strong { color: #000; }
   .center { text-align: center; }
+  .identity {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 14px;
+    border-radius: 14px; background: var(--surface-2); min-width: 0;
+  }
+  .identity > div { min-width: 0; flex: 1; }
+  .identity strong { display: block; overflow-wrap: anywhere; }
+  .identity small { display: block; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+
+  /* Avatar */
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--brand); color: #fff;
+    display: grid; place-items: center; font-weight: 700; font-size: 15px; flex: none;
+  }
 
   /* Forms */
-  .form-stack { display: grid; gap: 14px; margin-top: 18px; min-width: 0; }
+  .form-stack { display: grid; gap: 14px; min-width: 0; }
   .field-label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin: 0 0 6px; }
   .input, .select, .textarea {
     display: block; width: 100%; min-width: 0; min-height: 44px;
@@ -98,9 +103,27 @@
   .textarea { min-height: 96px; resize: vertical; }
   .input:focus, .select:focus, .textarea:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, .35); }
   .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; overflow-wrap: anywhere; }
+  .ok-msg { font-size: 15px; color: #248a3d; margin: 10px 0 0; overflow-wrap: anywhere; }
   .error { font-size: 15px; color: var(--bad); margin: 10px 0 0; overflow-wrap: anywhere; }
-  .error:empty { display: none; }
+  .error:empty, .ok-msg:empty { display: none; }
 
+  /* Segmented control (sign in / create account) */
+  .segmented {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px;
+    background: var(--surface-2); border-radius: 10px; margin-bottom: 16px;
+  }
+  .segmented button {
+    min-height: 36px; border: 0; border-radius: 8px; background: none;
+    font-weight: 600; color: var(--text-2); cursor: pointer;
+  }
+  .segmented button.on { background: #fff; color: #000; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+
+  /* Account details */
+  .kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 14px; font-size: 15px; margin: 0; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; overflow-wrap: anywhere; }
+
+  /* Type picker */
   .type-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .type-opt { position: relative; min-width: 0; }
   .type-opt input { position: absolute; opacity: 0; pointer-events: none; }
@@ -113,7 +136,7 @@
   .type-opt input:checked + label { background: var(--brand-soft); color: var(--brand); box-shadow: inset 0 0 0 2px var(--brand); }
   .type-opt input:focus-visible + label { outline: 2px solid var(--brand); outline-offset: 2px; }
 
-  /* Files: fixed-size drop area and list, so choosing files doesn't jump the page */
+  /* Files: fixed-size drop area and list */
   .dropzone {
     min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
     padding: 18px; text-align: center; cursor: pointer;
@@ -148,7 +171,6 @@
   .btn.warn { background: var(--warn); }
   .btn.danger { background: var(--bad); }
   .btn.sm { min-height: 34px; padding: 6px 12px; font-size: 15px; border-radius: 10px; }
-  .btn.block { width: 100%; }
   .actions { display: grid; gap: 10px; margin-top: 18px; }
   .inline-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
@@ -161,12 +183,22 @@
   .version-badge { display: inline-block; padding: 2px 6px; border-radius: 6px; background: var(--surface-2); font-family: var(--mono); font-size: 12px; color: var(--text-2); }
   .mono { font-family: var(--mono); font-size: 13px; color: var(--text-2); overflow-wrap: anywhere; word-break: break-all; }
   .role-tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); }
-  .role-tag.reviewer { background: var(--surface-2); color: var(--text-2); }
+  .role-tag.submitter { background: var(--surface-2); color: var(--text-2); }
   .note-tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; background: #f2f2f7; color: #636366; }
   .note-tag.submitter { background: var(--ok-soft); color: #248a3d; }
   .status-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
 
-  /* Queue (rows on phones) */
+  /* My files list */
+  .items { list-style: none; margin: 0; padding: 0; }
+  .item {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+    width: 100%; padding: 12px 4px; text-align: left; cursor: pointer;
+    background: none; border: 0; border-bottom: .5px solid var(--line);
+  }
+  .item.sel { background: var(--brand-soft); border-radius: 10px; border-bottom-color: transparent; }
+  .item .meta { grid-column: 1 / -1; }
+
+  /* Review queue (rows on phones) */
   .toolbar { display: grid; gap: 8px; margin-bottom: 12px; }
   .toolbar .select { width: 100%; }
   table, tbody { display: block; width: 100%; }
@@ -191,7 +223,6 @@
   .detail-head h2 { font-size: 22px; font-weight: 700; letter-spacing: .2px; margin: 0 0 6px; overflow-wrap: anywhere; }
   .submitter { display: flex; align-items: center; gap: 10px; margin: 14px 0; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); min-width: 0; }
   .submitter > div { min-width: 0; flex: 1; }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex: none; }
   .who { font-weight: 600; overflow-wrap: anywhere; }
   .email { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
   .desc { margin: 12px 0 0; color: var(--text-2); overflow-wrap: anywhere; }
@@ -217,7 +248,6 @@
   .preview-box .hint { margin: 0; }
   .decision { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .decision .btn { width: 100%; }
-  .decision .wide { grid-column: 1 / -1; }
   .assign-row { display: grid; gap: 8px; }
   .note-row { display: grid; gap: 8px; }
   .note-list { list-style: none; margin: 0; padding: 0; }
@@ -233,8 +263,8 @@
   .timeline li:last-child::after { display: none; }
   .timeline time { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
 
-  /* Track and resubmit */
-  .result-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 18px 0 6px; min-width: 0; }
+  /* Result header, resubmit, receipt */
+  .result-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 6px; min-width: 0; }
   .result-head h3 { flex-basis: 100%; margin: 0; font-size: 18px; overflow-wrap: anywhere; }
   .resubmit-card { margin-top: 18px; padding: 16px; border-radius: 14px; background: var(--warn-soft); min-width: 0; }
   .resubmit-card h4 { margin: 0 0 4px; font-size: 16px; color: #c77700; }
@@ -244,8 +274,7 @@
   .success p { margin: 4px 0 0; color: var(--text-2); overflow-wrap: anywhere; }
   .ref-badge { font-family: var(--mono); font-weight: 600; background: #fff; padding: 3px 8px; border-radius: 8px; overflow-wrap: anywhere; }
 
-  /* Sign in and team */
-  .auth-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; margin-bottom: 12px; }
+  /* Team */
   .reviewer-list { list-style: none; margin: 0; padding: 0; }
   .reviewer-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 0; border-bottom: .5px solid var(--line); min-width: 0; }
   .reviewer-list li:last-child { border-bottom: 0; }
@@ -272,21 +301,25 @@
     <div class="nav-wrap">
       <div class="nav-label" id="navLabel">Workspace</div>
       <nav aria-labelledby="navLabel">
-        <button type="button" class="nav-btn active" data-view="submit">
+        <button type="button" class="nav-btn user-only hidden" data-view="submit" id="navSubmit">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           Submit
         </button>
-        <button type="button" class="nav-btn" data-view="track">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          Track
+        <button type="button" class="nav-btn user-only hidden" data-view="mine" id="navMine">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          My files
         </button>
-        <button type="button" class="nav-btn" data-view="review">
+        <button type="button" class="nav-btn reviewer-only hidden" data-view="review" id="navReview">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>
           Review
         </button>
-        <button type="button" class="nav-btn hidden" id="navManage" data-view="manage">
+        <button type="button" class="nav-btn admin-only hidden" data-view="manage" id="navManage">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 11h4M19 9v4"/></svg>
           Team
+        </button>
+        <button type="button" class="nav-btn" data-view="account" id="navAccount">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          Account
         </button>
       </nav>
     </div>
@@ -296,11 +329,13 @@
   <main>
 
     <!-- SUBMIT -->
-    <section id="view-submit" class="view">
+    <section id="view-submit" class="view hidden">
       <div class="page-head">
         <h1>New submission</h1>
         <p>Send any files for review. You can select several at once.</p>
       </div>
+
+      <div class="identity" id="identity"></div>
 
       <div class="card">
         <form id="submitForm" novalidate>
@@ -313,15 +348,7 @@
             <div class="type-opt"><input type="radio" name="type" id="t-video" value="video"><label for="t-video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>Video</label></div>
           </div>
 
-          <div class="form-stack">
-            <div>
-              <label class="field-label" for="name">Your name</label>
-              <input class="input" id="name" autocomplete="name" maxlength="120">
-            </div>
-            <div>
-              <label class="field-label" for="email">Work email</label>
-              <input class="input" id="email" type="email" autocomplete="email" maxlength="254">
-            </div>
+          <div class="form-stack" style="margin-top:18px">
             <div>
               <label class="field-label" for="title">Title</label>
               <input class="input" id="title" placeholder="e.g. Q4 onboarding pack" maxlength="200">
@@ -368,82 +395,31 @@
         </div>
         <div>
           <strong>Submission received</strong>
-          <p>Your reference is <span class="ref-badge" id="receiptRef"></span>. Keep it with your email to track progress.</p>
+          <p>Your reference is <span class="ref-badge" id="receiptRef"></span>. You can follow its progress under My files.</p>
           <div class="inline-actions">
-            <button type="button" class="btn ghost sm" id="copyRefBtn">Copy reference</button>
-            <button type="button" class="btn ghost sm" id="trackFromReceipt">Track this submission</button>
+            <button type="button" class="btn ghost sm" id="goMineBtn">View my files</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TRACK -->
-    <section id="view-track" class="view hidden">
+    <!-- MY FILES -->
+    <section id="view-mine" class="view hidden">
       <div class="page-head">
-        <h1>Track status</h1>
-        <p>Enter your reference number and the email you submitted with.</p>
+        <h1>My files</h1>
+        <p id="mineCount">Everything you have sent for review.</p>
       </div>
       <div class="card">
-        <form id="trackForm" novalidate>
-          <div class="form-stack" style="margin-top:0">
-            <div>
-              <label class="field-label" for="trackRef">Reference</label>
-              <input class="input mono" id="trackRef" placeholder="CD-XXXXXX" autocomplete="off" spellcheck="false" maxlength="12" style="text-transform:uppercase">
-            </div>
-            <div>
-              <label class="field-label" for="trackEmail">Email</label>
-              <input class="input" id="trackEmail" type="email" autocomplete="email" maxlength="254">
-            </div>
-          </div>
-          <div class="actions">
-            <button type="submit" class="btn" id="trackBtn">Look up</button>
-          </div>
-        </form>
-        <p class="error" id="trackError" role="alert"></p>
-        <div id="trackResult"></div>
+        <ul class="items" id="mineList"></ul>
       </div>
-    </section>
-
-    <!-- SIGN IN -->
-    <section id="view-signin" class="view hidden">
-      <div class="page-head">
-        <div class="auth-icon" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-        </div>
-        <h1>IT reviewer sign in</h1>
-        <p>Only authorised IT staff can review submissions.</p>
-      </div>
-      <div class="card">
-        <form id="signInForm" novalidate>
-          <div class="form-stack" style="margin-top:0">
-            <div>
-              <label class="field-label" for="authEmail">Work email</label>
-              <input class="input" id="authEmail" type="email" autocomplete="username" spellcheck="false">
-            </div>
-            <div>
-              <label class="field-label" for="authPass">Password</label>
-              <input class="input" id="authPass" type="password" autocomplete="current-password">
-            </div>
-          </div>
-          <p class="error" id="authError" role="alert"></p>
-          <div class="actions">
-            <button class="btn" type="submit" id="authBtn">Sign in</button>
-          </div>
-        </form>
-        <p class="center" style="margin:14px 0 0"><button type="button" class="btn ghost sm" id="forgotBtn">Forgot password?</button></p>
-      </div>
+      <div class="card hidden" id="mineDetail"></div>
     </section>
 
     <!-- REVIEW -->
     <section id="view-review" class="view hidden">
       <div class="page-head">
         <h1>Review</h1>
-        <p>Check submissions before they reach their destination.</p>
-      </div>
-
-      <div class="session-bar">
-        <span id="whoami"></span>
-        <button type="button" class="btn ghost sm" id="signOutBtn">Sign out</button>
+        <p id="whoami">Check submissions before they reach their destination.</p>
       </div>
 
       <div class="stats">
@@ -482,13 +458,11 @@
             <option value="unassigned">Unassigned</option>
           </select>
         </div>
-        <div>
-          <table>
-            <caption class="sr-only">Submissions</caption>
-            <thead><tr><th scope="col">Submission</th><th scope="col">Type</th><th scope="col">Status</th></tr></thead>
-            <tbody id="queueBody"></tbody>
-          </table>
-        </div>
+        <table>
+          <caption class="sr-only">Submissions</caption>
+          <thead><tr><th scope="col">Submission</th><th scope="col">Type</th><th scope="col">Status</th></tr></thead>
+          <tbody id="queueBody"></tbody>
+        </table>
       </div>
 
       <div class="card" id="detail"></div>
@@ -498,51 +472,108 @@
     <section id="view-manage" class="view hidden">
       <div class="page-head">
         <h1>Team</h1>
-        <p>Add or remove reviewers. Admins only.</p>
+        <p>Reviewers and admins. Admins only.</p>
       </div>
 
       <div class="card" id="noPermCard">
-        <div class="empty"><strong>Admins only</strong>You don't have permission to manage reviewers.</div>
+        <div class="empty"><strong>Admins only</strong>You don't have permission to manage the team.</div>
       </div>
 
       <div id="manageWrap" class="hidden">
         <div class="card">
-          <h2 class="card-title">Reviewers</h2>
-          <p class="card-sub">People who can sign in and review submissions.</p>
+          <h2 class="card-title">Team</h2>
+          <p class="card-sub">Change a person's role in Table Editor &gt; profiles. Set it to reviewer or admin to give access to Review.</p>
           <ul class="reviewer-list" id="reviewerList"></ul>
         </div>
+      </div>
+    </section>
 
+    <!-- ACCOUNT -->
+    <section id="view-account" class="view hidden">
+      <div class="page-head">
+        <h1 id="accountTitle">Account</h1>
+        <p id="accountSub">Sign in to submit files and follow their progress.</p>
+      </div>
+
+      <!-- Signed out -->
+      <div id="accountAnon">
         <div class="card">
-          <h2 class="card-title">Add reviewer</h2>
-          <p class="card-sub">Creates the account. Share the temporary password securely.</p>
-          <form id="addReviewerForm" novalidate>
+          <div class="segmented" role="tablist">
+            <button type="button" id="tabIn" class="on" aria-pressed="true">Sign in</button>
+            <button type="button" id="tabUp" aria-pressed="false">Create account</button>
+          </div>
+
+          <form id="signInForm" novalidate>
             <div class="form-stack" style="margin-top:0">
               <div>
-                <label class="field-label" for="newRevName">Full name</label>
-                <input class="input" id="newRevName" autocomplete="off" maxlength="120">
+                <label class="field-label" for="signInEmail">Email</label>
+                <input class="input" id="signInEmail" type="email" autocomplete="username" spellcheck="false">
               </div>
               <div>
-                <label class="field-label" for="newRevEmail">Work email</label>
-                <input class="input" id="newRevEmail" type="email" autocomplete="off" spellcheck="false" maxlength="254">
+                <label class="field-label" for="signInPass">Password</label>
+                <input class="input" id="signInPass" type="password" autocomplete="current-password">
+              </div>
+            </div>
+            <p class="error" id="signInError" role="alert"></p>
+            <div class="actions">
+              <button type="submit" class="btn" id="signInBtn">Sign in</button>
+            </div>
+            <p class="center" style="margin:14px 0 0"><button type="button" class="btn ghost sm" id="forgotBtn">Forgot password?</button></p>
+          </form>
+
+          <form id="signUpForm" class="hidden" novalidate>
+            <div class="form-stack" style="margin-top:0">
+              <div>
+                <label class="field-label" for="suName">Full name</label>
+                <input class="input" id="suName" autocomplete="name" maxlength="120">
               </div>
               <div>
-                <label class="field-label" for="newRevPass">Temporary password</label>
-                <input class="input" id="newRevPass" type="password" autocomplete="new-password" minlength="8">
+                <label class="field-label" for="suEmail">Email</label>
+                <input class="input" id="suEmail" type="email" autocomplete="email" spellcheck="false" maxlength="254">
+              </div>
+              <div>
+                <label class="field-label" for="suDept">Department</label>
+                <select class="select" id="suDept"><option value="">Loading…</option></select>
+              </div>
+              <div>
+                <label class="field-label" for="suPosition">Position</label>
+                <input class="input" id="suPosition" placeholder="e.g. Accounts Officer" maxlength="120">
+              </div>
+              <div>
+                <label class="field-label" for="suPass">Password</label>
+                <input class="input" id="suPass" type="password" autocomplete="new-password" minlength="8">
                 <p class="hint">At least 8 characters.</p>
               </div>
-              <div>
-                <label class="field-label" for="newRevRole">Role</label>
-                <select class="select" id="newRevRole">
-                  <option value="reviewer">Reviewer</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
             </div>
-            <p class="error" id="addReviewerError" role="alert"></p>
+            <p class="error" id="signUpError" role="alert"></p>
             <div class="actions">
-              <button type="submit" class="btn">Add reviewer</button>
+              <button type="submit" class="btn" id="signUpBtn">Create account</button>
             </div>
           </form>
+
+          <p class="ok-msg" id="authMsg" role="status"></p>
+        </div>
+      </div>
+
+      <!-- Signed in -->
+      <div id="accountUser" class="hidden">
+        <div class="card">
+          <div class="identity" style="margin-bottom:14px">
+            <div class="avatar" id="accAvatar" aria-hidden="true"></div>
+            <div>
+              <strong id="accName"></strong>
+              <small id="accEmail"></small>
+            </div>
+          </div>
+          <dl class="kv">
+            <dt>Department</dt><dd id="accDept"></dd>
+            <dt>Position</dt><dd id="accPos"></dd>
+            <dt>Role</dt><dd id="accRole"></dd>
+          </dl>
+          <p class="hint">To change your department or position, ask an admin.</p>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn danger" id="signOutBtn">Sign out</button>
         </div>
       </div>
     </section>
@@ -573,8 +604,10 @@
     pending: "Pending", under_review: "Under review", changes_requested: "Changes requested",
     approved: "Approved", rejected: "Rejected"
   };
+  const ROLE_LABEL = { submitter: "Submitter", reviewer: "Reviewer", admin: "Admin" };
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const SUB_SELECT = "*, notes:submission_notes(*), history:submission_history(*), versions:submission_versions(*)";
+  const PROTECTED = ["submit", "mine", "review", "manage"];
 
   // ── Helpers ─────────────────────────────────────────────────
   const $ = id => document.getElementById(id);
@@ -602,8 +635,8 @@
 
   // Image or video, judged from the MIME type or the file extension
   function mediaKind(f) {
-    const n = (f.file_name || "").toLowerCase();
-    const m = (f.file_mime || "").toLowerCase();
+    const n = (f.file_name || f.name || "").toLowerCase();
+    const m = (f.file_mime || f.mime || "").toLowerCase();
     if (m.startsWith("image/") || /\.(jpe?g|png|gif|webp|heic|avif|bmp)$/.test(n)) return "image";
     if (m.startsWith("video/") || /\.(mp4|mov|webm|m4v|mkv|avi|3gp)$/.test(n)) return "video";
     return null;
@@ -665,13 +698,25 @@
     return data.signedUrl;
   }
 
-  // Uploads each file to the incoming folder. Returns the details the database needs.
+  async function openFile(path) {
+    const w = window.open("", "_blank");
+    if (w) w.opener = null;
+    try {
+      const url = await signedUrl(path);
+      if (w) w.location = url; else toast("Allow pop-ups to open files");
+    } catch (ex) {
+      if (w) w.close();
+      toast(errMsg(ex));
+    }
+  }
+
+  // Uploads into the signed-in user's own folder and returns what the database needs
   async function uploadFiles(files, btn) {
     const out = [];
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       if (btn && files.length > 1) btn.textContent = `Uploading ${i + 1} of ${files.length}…`;
-      const path = `incoming/${uid()}/${safeName(f.name)}`;
+      const path = `incoming/${user.id}/${uid()}/${safeName(f.name)}`;
       const { error } = await sb.storage.from(BUCKET).upload(path, f, {
         contentType: f.type || "application/octet-stream", upsert: false
       });
@@ -681,8 +726,7 @@
     return out;
   }
 
-  // Multi-file picker. The drop area and list keep a fixed size, so choosing
-  // files only changes the text inside them and the page doesn't jump.
+  // Multi-file picker with a fixed-size drop area and list
   function createFilePicker({ zone, input, list, onError }) {
     let files = [];
 
@@ -721,27 +765,26 @@
     zone.addEventListener("drop", e => add(e.dataTransfer && e.dataTransfer.files));
 
     render();
-    return {
-      get: () => files.slice(),
-      clear: () => { files = []; render(); }
-    };
+    return { get: () => files.slice(), clear: () => { files = []; render(); } };
   }
 
   // ── State ───────────────────────────────────────────────────
-  let user = null;          // Supabase auth user
-  let profile = null;       // row from profiles (role lives here)
-  let submissions = [];
+  let user = null;        // Supabase auth user
+  let profile = null;     // row from profiles: name, email, department, position, role
+  let submissions = [];   // reviewer queue
   let reviewers = [];
-  let selectedRef = null;
+  let myItems = [];       // submitter's own items
+  let selectedRef = null; // reviewer selection
+  let selectedMine = null;
   let pendingView = null;
   let channel = null;
   let busy = false;
   let detailToken = 0;
-  let trackCtx = null;
-  let lastSubmitted = null;
+  let authMode = "in";
 
-  const isReviewer = () => !!(user && profile);
-  const isAdmin = () => isReviewer() && profile.role === "admin";
+  const isSignedIn = () => !!(user && profile);
+  const isReviewer = () => isSignedIn() && (profile.role === "reviewer" || profile.role === "admin");
+  const isAdmin = () => isSignedIn() && profile.role === "admin";
   const currentSubmission = () => submissions.find(x => x.ref === selectedRef) || null;
 
   // ── Data access ─────────────────────────────────────────────
@@ -761,7 +804,6 @@
     user = session.user;
     const { data, error } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
     if (error || !data) {
-      // Signed in but not a reviewer: sign out so they can't reach the data
       await sb.auth.signOut();
       user = null; profile = null;
       return false;
@@ -771,44 +813,176 @@
   }
 
   function updateNav() {
-    $("navManage").classList.toggle("hidden", !isAdmin());
+    const signed = isSignedIn();
+    document.querySelectorAll(".user-only").forEach(el => el.classList.toggle("hidden", !signed));
+    document.querySelectorAll(".reviewer-only").forEach(el => el.classList.toggle("hidden", !isReviewer()));
+    document.querySelectorAll(".admin-only").forEach(el => el.classList.toggle("hidden", !isAdmin()));
   }
 
-  // ── Auth ────────────────────────────────────────────────────
+  // ── Auth state ──────────────────────────────────────────────
   sb.auth.onAuthStateChange(event => {
     if (event !== "SIGNED_OUT") return;
     user = null; profile = null;
-    submissions = []; reviewers = [];
-    selectedRef = null; detailToken++;
+    submissions = []; reviewers = []; myItems = [];
+    selectedRef = null; selectedMine = null; detailToken++;
     unsubscribe();
     updateNav();
-    const onReviewPage = ["review", "manage"].some(v => !$("view-" + v).classList.contains("hidden"));
-    if (onReviewPage) showView("submit");
+    const onProtected = PROTECTED.some(v => !$("view-" + v).classList.contains("hidden"));
+    if (onProtected) showView("account");
+    else renderAccount();
   });
+
+  function afterSignIn() {
+    updateNav();
+    toast(`Signed in as ${profile.name}`);
+    const target = pendingView || "submit";
+    pendingView = null;
+    showView(target);
+  }
+
+  // ── Navigation ──────────────────────────────────────────────
+  const VIEWS = ["submit", "mine", "review", "manage", "account"];
+
+  document.querySelectorAll(".nav-btn").forEach(b =>
+    b.addEventListener("click", () => showView(b.dataset.view)));
+
+  function showView(name) {
+    if (!VIEWS.includes(name)) name = "account";
+
+    // Protected views send signed-out people to the account screen first
+    if (PROTECTED.includes(name) && !isSignedIn()) {
+      pendingView = name;
+      name = "account";
+    }
+    if (name === "review" && !isReviewer()) name = "submit";
+
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+    VIEWS.forEach(v => $("view-" + v).classList.toggle("hidden", v !== name));
+    updateNav();
+
+    if (name === "submit") renderIdentity();
+    if (name === "mine") refreshMine();
+    if (name === "review") refreshReview();
+    if (name === "manage") refreshManage();
+    if (name === "account") renderAccount();
+  }
+
+  // ── Account ─────────────────────────────────────────────────
+  function setAuthMode(m) {
+    authMode = m;
+    $("tabIn").classList.toggle("on", m === "in");
+    $("tabIn").setAttribute("aria-pressed", String(m === "in"));
+    $("tabUp").classList.toggle("on", m === "up");
+    $("tabUp").setAttribute("aria-pressed", String(m === "up"));
+    $("signInForm").classList.toggle("hidden", m !== "in");
+    $("signUpForm").classList.toggle("hidden", m !== "up");
+    $("signInError").textContent = "";
+    $("signUpError").textContent = "";
+    $("authMsg").textContent = "";
+    if (m === "up") loadDepartments();
+  }
+  $("tabIn").addEventListener("click", () => setAuthMode("in"));
+  $("tabUp").addEventListener("click", () => setAuthMode("up"));
+
+  async function loadDepartments() {
+    const sel = $("suDept");
+    if (sel.dataset.loaded) return;
+    const { data, error } = await sb.from("departments").select("name").order("name");
+    const names = (!error && data && data.length) ? data.map(d => d.name) : ["Other"];
+    const current = sel.value;
+    sel.innerHTML = `<option value="">Choose a department</option>` + names.map(n => `<option>${esc(n)}</option>`).join("");
+    sel.value = current;
+    if (!error) sel.dataset.loaded = "1";
+  }
+
+  function renderAccount() {
+    const signed = isSignedIn();
+    $("accountAnon").classList.toggle("hidden", signed);
+    $("accountUser").classList.toggle("hidden", !signed);
+    $("accountTitle").textContent = signed ? "Account" : "Account";
+    $("accountSub").textContent = signed ? "Your details. Your submissions are under My files." : "Sign in to submit files and follow their progress.";
+    if (signed) {
+      $("accAvatar").textContent = initials(profile.name);
+      $("accName").textContent = profile.name;
+      $("accEmail").textContent = profile.email;
+      $("accDept").textContent = profile.department || "—";
+      $("accPos").textContent = profile.position || "—";
+      $("accRole").textContent = ROLE_LABEL[profile.role] || profile.role;
+    }
+  }
 
   $("signInForm").addEventListener("submit", async e => {
     e.preventDefault();
     if (busy) return;
-    const err = $("authError");
+    const err = $("signInError");
     err.textContent = "";
-    const email = $("authEmail").value.trim().toLowerCase();
-    const pw = $("authPass").value;
-    if (!EMAIL_RE.test(email)) { err.textContent = "Enter a valid email address."; $("authEmail").focus(); return; }
-    if (!pw) { err.textContent = "Enter your password."; $("authPass").focus(); return; }
+    const email = $("signInEmail").value.trim().toLowerCase();
+    const pw = $("signInPass").value;
+    if (!EMAIL_RE.test(email)) { err.textContent = "Enter a valid email address."; $("signInEmail").focus(); return; }
+    if (!pw) { err.textContent = "Enter your password."; $("signInPass").focus(); return; }
 
     busy = true;
     try {
-      await withButton($("authBtn"), "Signing in…", async () => {
+      await withButton($("signInBtn"), "Signing in…", async () => {
         const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
-        if (error) { err.textContent = "Email or password is incorrect."; return; }
+        if (error) {
+          err.textContent = /not confirmed/i.test(error.message)
+            ? "Confirm your email first. Check your inbox for the link."
+            : "Email or password is incorrect.";
+          return;
+        }
         const ok = await loadProfile(data.session);
-        if (!ok) { err.textContent = "This account doesn't have reviewer access. Ask an admin to add you."; return; }
-        $("authPass").value = "";
-        updateNav();
-        const target = pendingView || "review";
-        pendingView = null;
-        toast(`Signed in as ${profile.name}`);
-        showView(target);
+        if (!ok) { err.textContent = "This account has no profile yet. Contact an admin."; return; }
+        $("signInPass").value = "";
+        afterSignIn();
+      });
+    } catch (ex) {
+      err.textContent = errMsg(ex);
+    } finally {
+      busy = false;
+    }
+  });
+
+  $("signUpForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    if (busy) return;
+    const err = $("signUpError");
+    err.textContent = "";
+    const name = $("suName").value.trim();
+    const email = $("suEmail").value.trim().toLowerCase();
+    const department = $("suDept").value;
+    const position = $("suPosition").value.trim();
+    const pw = $("suPass").value;
+
+    if (!name) { err.textContent = "Enter your full name."; $("suName").focus(); return; }
+    if (!EMAIL_RE.test(email)) { err.textContent = "Enter a valid email address."; $("suEmail").focus(); return; }
+    if (!department) { err.textContent = "Choose your department."; $("suDept").focus(); return; }
+    if (position.length < 2) { err.textContent = "Enter your position."; $("suPosition").focus(); return; }
+    if (pw.length < 8) { err.textContent = "Use at least 8 characters for your password."; $("suPass").focus(); return; }
+
+    busy = true;
+    try {
+      await withButton($("signUpBtn"), "Creating account…", async () => {
+        const { data, error } = await sb.auth.signUp({
+          email,
+          password: pw,
+          options: { data: { name, department, position } }
+        });
+        if (error) { err.textContent = error.message; return; }
+
+        // Email confirmation is on: no session yet, so ask them to confirm first
+        if (!data.session) {
+          $("signUpForm").reset();
+          setAuthMode("in");
+          $("signInEmail").value = email;
+          $("authMsg").textContent = "Almost there. Check your email to confirm your address, then sign in.";
+          return;
+        }
+
+        const ok = await loadProfile(data.session);
+        if (!ok) { err.textContent = "Account created, but no profile was found. Contact an admin."; return; }
+        $("signUpForm").reset();
+        afterSignIn();
       });
     } catch (ex) {
       err.textContent = errMsg(ex);
@@ -818,9 +992,8 @@
   });
 
   $("forgotBtn").addEventListener("click", async () => {
-    const email = $("authEmail").value.trim().toLowerCase();
-    if (!EMAIL_RE.test(email)) { $("authError").textContent = "Enter your work email first."; return; }
-    // Same message whether or not the account exists, to avoid revealing accounts
+    const email = $("signInEmail").value.trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) { $("signInError").textContent = "Enter your email first."; return; }
     await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split("#")[0] });
     toast("If that account exists, a reset link is on its way.");
   });
@@ -829,33 +1002,6 @@
     await sb.auth.signOut();
     toast("Signed out");
   });
-
-  // ── Navigation ──────────────────────────────────────────────
-  const VIEWS = ["submit", "track", "review", "signin", "manage"];
-
-  document.querySelectorAll(".nav-btn").forEach(b =>
-    b.addEventListener("click", () => showView(b.dataset.view)));
-
-  function showView(name) {
-    if (!VIEWS.includes(name)) name = "submit";
-    if ((name === "review" || name === "manage") && !isReviewer()) {
-      pendingView = name;
-      name = "signin";
-    }
-    if (name === "signin" && isReviewer()) name = "review";
-
-    const navKey = name === "signin" ? "review" : name;
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === navKey));
-    VIEWS.forEach(v => $("view-" + v).classList.toggle("hidden", v !== name));
-    updateNav();
-
-    if (isReviewer()) {
-      $("whoami").innerHTML =
-        `Signed in as <strong>${esc(profile.name)}</strong> · <span class="role-tag ${esc(profile.role)}">${esc(profile.role)}</span>`;
-    }
-    if (name === "review") refreshReview();
-    if (name === "manage") refreshManage();
-  }
 
   // ── Submit ──────────────────────────────────────────────────
   const form = $("submitForm");
@@ -869,6 +1015,17 @@
     const t = currentType();
     $("bodyField").classList.toggle("hidden", t !== "article");
     $("fileLabel").textContent = REQUIRES_FILE[t] ? "Files" : "Attachments (optional)";
+  }
+
+  function renderIdentity() {
+    if (!isSignedIn()) return;
+    $("identity").innerHTML = `
+      <div class="avatar" aria-hidden="true">${esc(initials(profile.name))}</div>
+      <div>
+        <strong>${esc(profile.name)}</strong>
+        <small>${esc(profile.position || "No position")} · ${esc(profile.department || "No department")}</small>
+        <small>${esc(profile.email)}</small>
+      </div>`;
   }
 
   const picker = createFilePicker({
@@ -887,17 +1044,20 @@
     syncTypeFields();
   });
 
+  $("goMineBtn").addEventListener("click", () => showView("mine"));
+  $("copyRefBtn") && $("copyRefBtn").addEventListener("click", () => copyText($("receiptRef").textContent));
+
   form.addEventListener("submit", async e => {
     e.preventDefault();
     if (busy) return;
+    if (!isSignedIn()) { pendingView = "submit"; showView("account"); return; }
+
     const err = $("submitError");
     err.textContent = "";
     const fail = (id, msg) => { err.textContent = msg; if (id) $(id).focus(); };
 
     const t = currentType();
     const v = {
-      name: $("name").value.trim(),
-      email: $("email").value.trim().toLowerCase(),
       title: $("title").value.trim(),
       description: $("description").value.trim(),
       body: $("body").value.trim(),
@@ -905,8 +1065,6 @@
     };
     const files = picker.get();
 
-    if (!v.name) return fail("name", "Please enter your name.");
-    if (!EMAIL_RE.test(v.email)) return fail("email", "Enter a valid email address.");
     if (!v.title) return fail("title", "Please give your submission a title.");
     if (t === "article" && !v.body) return fail("body", "Articles need a body.");
     if (REQUIRES_FILE[t] && !files.length) return fail(null, "Please add at least one file.");
@@ -919,8 +1077,6 @@
         const { data: ref, error } = await sb.rpc("create_submission", {
           p_type: t,
           p_title: v.title,
-          p_name: v.name,
-          p_email: v.email,
           p_description: v.description || null,
           p_body: t === "article" ? v.body : null,
           p_destination: v.destination,
@@ -928,7 +1084,6 @@
         });
         if (error) throw error;
 
-        lastSubmitted = { ref, email: v.email };
         form.reset();
         form.querySelector(`input[name="type"][value="${t}"]`).checked = true;
         picker.clear();
@@ -945,68 +1100,78 @@
     }
   });
 
-  $("copyRefBtn").addEventListener("click", () => copyText($("receiptRef").textContent));
-  $("trackFromReceipt").addEventListener("click", () => {
-    if (lastSubmitted) {
-      $("trackRef").value = lastSubmitted.ref;
-      $("trackEmail").value = lastSubmitted.email;
-    }
-    showView("track");
-  });
-
-  // ── Track ───────────────────────────────────────────────────
-  $("trackRef").addEventListener("input", e => { e.target.value = e.target.value.toUpperCase(); });
-
-  $("trackForm").addEventListener("submit", async e => {
-    e.preventDefault();
-    const msg = $("trackError");
-    const result = $("trackResult");
-    msg.textContent = "";
-    const ref = $("trackRef").value.trim().toUpperCase();
-    const email = $("trackEmail").value.trim().toLowerCase();
-    if (!ref) { msg.textContent = "Enter your reference number."; $("trackRef").focus(); return; }
-    if (!EMAIL_RE.test(email)) { msg.textContent = "Enter the email you submitted with."; $("trackEmail").focus(); return; }
-
+  // ── My files (submitter) ────────────────────────────────────
+  async function refreshMine() {
+    if (!isSignedIn()) return;
     try {
-      await withButton($("trackBtn"), "Looking up…", async () => {
-        const { data, error } = await sb.rpc("get_submission", { p_ref: ref, p_email: email });
-        if (error) throw error;
-        if (!data) {
-          result.innerHTML = "";
-          trackCtx = null;
-          msg.textContent = "No submission matches those details.";
-          return;
-        }
-        trackCtx = { ref, email };
-        renderTrack(data);
-      });
+      const { data, error } = await sb.rpc("get_my_submissions");
+      if (error) throw error;
+      myItems = data || [];
+      renderMine();
     } catch (ex) {
-      msg.textContent = errMsg(ex);
+      toast(errMsg(ex));
     }
-  });
+  }
 
-  function renderTrack(d) {
-    const history = (d.history || []).map(h =>
-      `<li>${esc(h.text)}<time>${fmt(h.at)} · ${esc(h.by)}</time></li>`).join("")
-      || `<li>No activity yet.<time>${fmt(d.submitted_at)}</time></li>`;
+  function renderMine() {
+    const list = $("mineList");
+    $("mineCount").textContent = myItems.length
+      ? `${myItems.length} submission${myItems.length === 1 ? "" : "s"}`
+      : "Everything you have sent for review.";
 
-    const messages = d.messages || [];
-    const messagesHtml = messages.length ? `
-      <div class="section-label">Messages from reviewers</div>
-      <ul class="note-list">
-        ${messages.map(m => `<li><div class="note-meta"><span>${esc(m.by)}</span><span>${fmt(m.at)}</span></div>${esc(m.text)}</li>`).join("")}
-      </ul>` : "";
+    if (!myItems.length) {
+      list.innerHTML = `<li class="empty"><strong>No submissions yet</strong>Files you send will appear here.</li>`;
+      $("mineDetail").classList.add("hidden");
+      return;
+    }
 
-    const open = d.status === "pending" || d.status === "under_review";
-    const autoNote = open && d.auto_approve_at
-      ? `<p class="hint">Approved automatically on ${fmt(d.auto_approve_at)} unless a reviewer acts first.</p>`
+    list.innerHTML = myItems.map(it => `
+      <li>
+        <button type="button" class="item ${it.ref === selectedMine ? "sel" : ""}" data-ref="${esc(it.ref)}">
+          <span class="title">${esc(it.title)}</span>
+          ${pill(it.status)}
+          <span class="meta mono">${esc(it.ref)} · v${esc(it.version)} · ${esc(it.destination)}</span>
+        </button>
+      </li>`).join("");
+
+    list.querySelectorAll("[data-ref]").forEach(b => b.addEventListener("click", () => {
+      selectedMine = b.dataset.ref;
+      renderMine();
+      $("mineDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+
+    renderMineDetail();
+  }
+
+  function renderMineDetail() {
+    const box = $("mineDetail");
+    const it = myItems.find(x => x.ref === selectedMine);
+    if (!it) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+    box.classList.remove("hidden");
+
+    const open = it.status === "pending" || it.status === "under_review";
+    const autoNote = open && it.auto_approve_at
+      ? `<p class="hint">Approved automatically on ${fmt(it.auto_approve_at)} unless a reviewer acts first.</p>`
       : "";
 
-    const filesHtml = (d.files || []).map(f =>
-      `<div class="attach"><span class="name">${esc(f.name)}</span><span class="meta">${bytes(f.size)}</span></div>`
-    ).join("") || `<p class="hint">No files attached.</p>`;
+    const filesHtml = (it.files || []).map(f => `
+      <div class="attach">
+        <span class="name">${esc(f.name)}</span>
+        <span class="meta">${bytes(f.size)}</span>
+        ${f.path ? `<button type="button" class="btn ghost sm" data-open="${esc(f.path)}">Open</button>` : ""}
+      </div>`).join("") || `<p class="hint">No files attached.</p>`;
 
-    const resubmitHtml = d.status === "changes_requested" ? `
+    const messagesHtml = (it.messages || []).length ? `
+      <div class="section-label">Messages from reviewers</div>
+      <ul class="note-list">
+        ${it.messages.map(m => `<li><div class="note-meta"><span>${esc(m.by)}</span><span>${fmt(m.at)}</span></div>${esc(m.text)}</li>`).join("")}
+      </ul>` : "";
+
+    const historyHtml = (it.history || []).map(h =>
+      `<li>${esc(h.text)}<time>${fmt(h.at)} · ${esc(h.by)}</time></li>`).join("")
+      || `<li>No activity yet.</li>`;
+
+    const resubmitHtml = it.status === "changes_requested" ? `
       <div class="resubmit-card">
         <h4>Changes requested</h4>
         <p class="hint">Add revised files and they go back into the review queue.</p>
@@ -1026,31 +1191,27 @@
         </form>
       </div>` : "";
 
-    $("trackResult").innerHTML = `
+    box.innerHTML = `
       <div class="result-head">
-        <h3>${esc(d.title)}</h3>
-        <span class="type-tag">${esc(d.type)}</span>
-        <span class="version-badge">v${esc(d.version)}</span>
-        ${pill(d.status)}
+        <h3>${esc(it.title)}</h3>
+        <span class="type-tag">${esc(it.type)}</span>
+        <span class="version-badge">v${esc(it.version)}</span>
+        ${pill(it.status)}
       </div>
-      <p class="card-sub" style="margin:0 0 6px">Submitted ${fmt(d.submitted_at)} for ${esc(d.destination)}</p>
+      <p class="card-sub" style="margin:0 0 6px">${esc(it.ref)} · Submitted ${fmt(it.submitted_at)} to ${esc(it.destination)}</p>
       ${autoNote}
-      <div class="inline-actions" style="margin:6px 0 4px">
-        <button type="button" class="btn ghost sm" id="trackCopy">Copy reference</button>
-      </div>
       <div class="section-label">Files</div>
       ${filesHtml}
       ${messagesHtml}
       <div class="section-label">History</div>
-      <ul class="timeline">${history}</ul>
+      <ul class="timeline">${historyHtml}</ul>
       ${resubmitHtml}`;
 
-    $("trackCopy").addEventListener("click", () => copyText(d.ref));
-
-    if (d.status === "changes_requested") bindResubmit(d);
+    box.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => openFile(b.dataset.open)));
+    if (it.status === "changes_requested") bindResubmit(it);
   }
 
-  function bindResubmit(d) {
+  function bindResubmit(it) {
     const rpicker = createFilePicker({
       zone: $("resubmitZone"), input: $("resubmitFile"), list: $("resubmitList"),
       onError: msg => { $("resubmitError").textContent = msg; }
@@ -1063,7 +1224,7 @@
       err.textContent = "";
       const files = rpicker.get();
       const note = $("resubmitNote").value.trim();
-      if (REQUIRES_FILE[d.type] && !files.length && !(d.files || []).length) {
+      if (REQUIRES_FILE[it.type] && !files.length && !(it.files || []).length) {
         err.textContent = "Please add a revised file.";
         return;
       }
@@ -1073,17 +1234,14 @@
         await withButton($("resubmitBtn"), "Sending…", async () => {
           const uploaded = await uploadFiles(files, $("resubmitBtn"));
           const { error } = await sb.rpc("resubmit_submission", {
-            p_ref: trackCtx.ref,
-            p_email: trackCtx.email,
+            p_ref: it.ref,
             p_files: uploaded,
             p_note: note || null
           });
           if (error) throw error;
           toast("Resubmitted for review");
         });
-
-        const { data, error } = await sb.rpc("get_submission", { p_ref: trackCtx.ref, p_email: trackCtx.email });
-        if (!error && data) renderTrack(data);
+        await refreshMine();
       } catch (ex) {
         err.textContent = errMsg(ex);
       } finally {
@@ -1092,7 +1250,7 @@
     });
   }
 
-  // ── Review ──────────────────────────────────────────────────
+  // ── Review (reviewers and admins) ───────────────────────────
   let searchTimer;
   $("search").addEventListener("input", () => {
     clearTimeout(searchTimer);
@@ -1103,6 +1261,7 @@
 
   async function refreshReview() {
     if (!isReviewer()) return;
+    $("whoami").innerHTML = `Signed in as <strong>${esc(profile.name)}</strong> · ${esc(ROLE_LABEL[profile.role] || profile.role)}`;
     try {
       reviewers = await fetchReviewers();
       await refreshData();
@@ -1156,7 +1315,8 @@
       if (ft !== "all" && s.type !== ft) return false;
       if (fa === "me" && s.assignee !== me) return false;
       if (fa === "unassigned" && s.assignee) return false;
-      if (q && ![s.title, s.name, s.email, s.ref].some(v => String(v || "").toLowerCase().includes(q))) return false;
+      if (q && ![s.title, s.name, s.email, s.ref, s.department, s.position]
+          .some(v => String(v || "").toLowerCase().includes(q))) return false;
       return true;
     });
 
@@ -1175,7 +1335,7 @@
           role="button" aria-pressed="${s.ref === selectedRef}">
         <td>
           <div class="title">${esc(s.title)}${s.assignee ? ` <span class="note-tag">assigned</span>` : ""}</div>
-          <div class="meta"><span class="mono">${esc(s.ref)}</span> · ${esc(s.name)} · v${esc(s.version)}</div>
+          <div class="meta"><span class="mono">${esc(s.ref)}</span> · ${esc(s.name)}${s.department ? " · " + esc(s.department) : ""} · v${esc(s.version)}</div>
         </td>
         <td><span class="type-tag">${esc(s.type)}</span></td>
         <td>${pill(s.status)}</td>
@@ -1195,7 +1355,7 @@
     });
   }
 
-  // ── Detail ──────────────────────────────────────────────────
+  // ── Review detail ───────────────────────────────────────────
   function renderDetail() {
     const token = ++detailToken;
     const panel = $("detail");
@@ -1221,7 +1381,7 @@
     // Each image or video among the current files gets a fixed-size preview box
     const previews = [];
     const filesHtml = current.map(f => {
-      const kind = mediaKind(f);
+      const kind = mediaKind({ file_name: f.file_name, file_mime: f.file_mime });
       let previewHtml = "";
       if (kind && f.file_path) {
         const i = previews.push({ path: f.file_path, kind, name: f.file_name }) - 1;
@@ -1263,6 +1423,7 @@
         <div class="avatar" aria-hidden="true">${esc(initials(s.name))}</div>
         <div>
           <div class="who">${esc(s.name)}</div>
+          <div class="email">${esc(s.position || "No position")} · ${esc(s.department || "No department")}</div>
           <div class="email">${esc(s.email)} · to ${esc(s.destination)}</div>
         </div>
       </div>
@@ -1352,19 +1513,7 @@
     }
   }
 
-  async function openFile(path) {
-    const w = window.open("", "_blank");
-    if (w) w.opener = null;
-    try {
-      const url = await signedUrl(path);
-      if (w) w.location = url; else toast("Allow pop-ups to open files");
-    } catch (ex) {
-      if (w) w.close();
-      toast(errMsg(ex));
-    }
-  }
-
-  // ── Actions ─────────────────────────────────────────────────
+  // ── Review actions ──────────────────────────────────────────
   async function assign(s, assigneeId) {
     try {
       const { error } = await sb.rpc("assign_submission", { p_id: s.id, p_assignee: assigneeId });
@@ -1381,7 +1530,7 @@
     if (busy) return;
     const s = currentSubmission();
     if (!s) return;
-    if (!isReviewer()) { toast("Please sign in again"); showView("review"); return; }
+    if (!isReviewer()) { toast("Please sign in again"); showView("account"); return; }
 
     if (action === "assign-me") return assign(s, user.id);
     if (action === "delete") return deleteSubmission(s);
@@ -1442,7 +1591,7 @@
     }
   }
 
-  // ── Realtime ────────────────────────────────────────────────
+  // ── Realtime (reviewers) ────────────────────────────────────
   let liveTimer;
   function subscribe() {
     unsubscribe();
@@ -1474,77 +1623,21 @@
   }
 
   function renderReviewers() {
-    const list = $("reviewerList");
-    const adminCount = reviewers.filter(r => r.role === "admin").length;
-    list.innerHTML = reviewers.map(r => {
-      const isMe = user && r.id === user.id;
-      const isLastAdmin = r.role === "admin" && adminCount === 1;
-      return `<li>
+    $("reviewerList").innerHTML = reviewers.map(r => `
+      <li>
         <div class="avatar" aria-hidden="true">${esc(initials(r.name))}</div>
         <div class="info">
-          <strong>${esc(r.name)}${isMe ? " (you)" : ""}</strong>
+          <strong>${esc(r.name)}${user && r.id === user.id ? " (you)" : ""}</strong>
           <small>${esc(r.email)}</small>
         </div>
-        <span class="role-tag ${esc(r.role)}">${esc(r.role)}</span>
-        ${!isMe && !isLastAdmin ? `<button type="button" class="btn ghost sm" data-remove="${esc(r.id)}">Remove</button>` : ""}
-      </li>`;
-    }).join("") || `<li><div class="info">No reviewers yet.</div></li>`;
-
-    list.querySelectorAll("[data-remove]").forEach(b =>
-      b.addEventListener("click", () => removeReviewer(b.dataset.remove)));
+        <span class="role-tag ${esc(r.role)}">${esc(ROLE_LABEL[r.role] || r.role)}</span>
+      </li>`).join("") || `<li><div class="info">No team members yet.</div></li>`;
   }
-
-  async function removeReviewer(id) {
-    const r = reviewers.find(x => x.id === id);
-    if (!r) return;
-    if (!confirm(`Remove ${r.name} (${r.email})? They will lose access immediately.`)) return;
-    try {
-      const { data, error } = await sb.functions.invoke("remove-reviewer", { body: { profile_id: id } });
-      if (error) throw new Error(await functionError(error));
-      if (data && data.error) throw new Error(data.error);
-      toast("Reviewer removed");
-      await refreshManage();
-    } catch (ex) {
-      toast(errMsg(ex));
-    }
-  }
-
-  $("addReviewerForm").addEventListener("submit", async e => {
-    e.preventDefault();
-    if (!isAdmin() || busy) return;
-    const err = $("addReviewerError");
-    err.textContent = "";
-    const name = $("newRevName").value.trim();
-    const email = $("newRevEmail").value.trim().toLowerCase();
-    const password = $("newRevPass").value;
-    const role = $("newRevRole").value === "admin" ? "admin" : "reviewer";
-
-    if (!name) { err.textContent = "Enter a name."; $("newRevName").focus(); return; }
-    if (!EMAIL_RE.test(email)) { err.textContent = "Enter a valid email."; $("newRevEmail").focus(); return; }
-    if (password.length < 8) { err.textContent = "Password must be at least 8 characters."; $("newRevPass").focus(); return; }
-
-    busy = true;
-    try {
-      await withButton(e.target.querySelector('button[type="submit"]'), "Adding…", async () => {
-        const { data, error } = await sb.functions.invoke("add-reviewer", {
-          body: { name, email, password, role }
-        });
-        if (error) throw new Error(await functionError(error));
-        if (data && data.error) throw new Error(data.error);
-        e.target.reset();
-        toast(`Added ${name} as ${role}`);
-      });
-      await refreshManage();
-    } catch (ex) {
-      err.textContent = errMsg(ex);
-    } finally {
-      busy = false;
-    }
-  });
 
   // ── Init ────────────────────────────────────────────────────
   (async () => {
     syncTypeFields();
+    setAuthMode("in");
     try {
       const { data: { session } } = await sb.auth.getSession();
       if (session) await loadProfile(session);
@@ -1552,7 +1645,7 @@
       console.error(ex);
     }
     updateNav();
-    showView("submit");
+    showView(isSignedIn() ? "submit" : "account");
   })();
 })();
 </script>
